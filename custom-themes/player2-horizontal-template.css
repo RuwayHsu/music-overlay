@@ -1,0 +1,70 @@
+/**
+ * ================================================================
+ * Player 2（橫向播放器）CSS 自訂模板
+ * ================================================================
+ * 用法：複製此檔案內容，貼到 OBS 瀏覽器來源的「自訂 CSS」中。
+ * 結構：
+ *   - 左方：獨立圓角正方形縮圖 (.p2-thumb-card，高度 125px)
+ *   - 右方：獨立長方形圓角資訊群組 (.p2-info-card，高度 125px)
+ *     - 右上：跑馬燈標題 + 5 條 Audio Spectrum (.spectrum)
+ *     - 右下：目前秒數 (#p2-cur-time) + 進度條 (.p2-progress-track) + 總長度 (#p2-total-time)
+ */
+
+:root {
+  /* ── 核心變數調整 ── */
+  --p2-width: 650px;                                 /* 整體寬度 (可依 OBS 佈局拉長) */
+  --p2-height: 125px;                               /* 嚴格高度 125px */
+  --p2-thumb-size: 125px;                           /* 縮圖寬高 (125px 正方形) */
+  --p2-thumb-radius: 18px;                          /* 縮圖圓角 */
+  --p2-info-radius: 18px;                           /* 右側資訊圓角 */
+  --p2-gap: 12px;                                   /* 縮圖與資訊群組間隔 */
+
+  --card-bg: rgba(14, 16, 24, 0.88);                /* 毛玻璃底色 */
+  --card-blur: 18px;                                /* 毛玻璃模糊度 */
+  --card-border: 1px solid rgba(255, 255, 255, 0.08);/* 卡片邊框 */
+  --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);   /* 陰影投影 */
+
+  --text-color: #ffffff;                            /* 標題顏色 */
+  --text-muted: rgba(255, 255, 255, 0.6);           /* 時間顏色 */
+  --track-bg: rgba(255, 255, 255, 0.15);            /* 進度槽底色 */
+  --accent-gradient: linear-gradient(to right, #ff3535, #ff7a35); /* 進度填滿漸層 */
+  --spectrum-gradient: linear-gradient(to top, #ff3535 0%, #ff8c00 50%, #ffcc00 100%); /* 5條頻譜漸層色 */
+}
+
+/* ── 左側縮圖客製化 ── */
+.p2-thumb-card {
+  /* box-shadow: 0 0 20px rgba(255, 80, 0, 0.25); */
+}
+
+/* ── 右側資訊卡客製化 ── */
+.p2-info-card {
+  padding: 16px 20px;
+}
+
+/* ── 跑馬燈標題（加大清晰） ── */
+.p2-title-wrap .marquee-inner {
+  font-size: 1.22em;
+  font-weight: 700;
+}
+
+/* ── 5 條 Audio Spectrum（音訊頻譜）樣式 ── */
+.spectrum {
+  gap: 4px;      /* 柱子間隔 */
+  height: 24px;  /* 頻譜最大高度 */
+}
+.spectrum i {
+  width: 4px;    /* 柱子寬度 */
+  border-radius: 2px 2px 0 0; /* 柱子頂部圓角 */
+}
+
+/* ── 右下目前秒數 + 進度條 + 總長度（分列兩側） ── */
+.p2-bottom {
+  gap: 12px;
+}
+.p2-progress-track {
+  height: 6px;
+}
+.p2-time {
+  font-size: 0.9em;
+  font-weight: 600;
+}

@@ -1,0 +1,8 @@
+{
+  "extName": {
+    "message": "メディア情報取得ツール (Prime Plus)"
+  },
+  "extDescription": {
+    "message": "YouTube、YouTube Music、Spotify、SoundCloud、Twitch の再生情報を取得します"
+  }
+}

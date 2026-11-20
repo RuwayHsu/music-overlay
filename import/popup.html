@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Music Player Overlay</title>
+  <style>
+    :root {
+      --bg:     #0d0f18;
+      --surface:#15182a;
+      --border: #1e2236;
+      --text:   #e8eaf2;
+      --muted:  #6b7090;
+      --accent: #ff4444;
+      --green:  #4ade80;
+      --red:    #f87171;
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      width: 360px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Microsoft JhengHei', 'Segoe UI', Arial, sans-serif;
+      font-size: 13px;
+    }
+
+    /* ── 頁首 ─────────────────────────────────────── */
+    .header {
+      padding: 14px 16px 10px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .header-title {
+      font-size: 1em;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .srv-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--muted);
+    }
+    .srv-dot.ok  { background: var(--green); }
+    .srv-dot.err { background: var(--red);   }
+
+    /* ── 目前播放 ─────────────────────────────────── */
+    .now-playing {
+      padding: 14px 16px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+    }
+    #np-thumb {
+      width: 52px; height: 52px;
+      border-radius: 6px;
+      object-fit: cover;
+      background: var(--border);
+      flex-shrink: 0;
+    }
+    .np-meta { flex: 1; min-width: 0; }
+    #np-title {
+      font-size: 0.85em;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      margin-bottom: 6px;
+      color: var(--text);
+      min-width: 0;
+    }
+    .np-title-text {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .platform-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      vertical-align: middle;
+      margin-left: 6px;
+      position: relative;
+      top: -1px;
+      flex-shrink: 0;
+    }
+    .platform-badge svg {
+      width: 1.15em;
+      height: 1.15em;
+      display: block;
+    }
+    .platform-badge.platform-youtube svg {
+      filter: drop-shadow(0 0 5px rgba(255, 0, 0, 0.45));
+    }
+    .platform-badge.platform-ytmusic svg {
+      filter: drop-shadow(0 0 5px rgba(255, 0, 0, 0.45));
+    }
+    .platform-badge.platform-spotify svg {
+      filter: drop-shadow(0 0 5px rgba(30, 215, 96, 0.45));
+    }
+    .platform-badge.platform-soundcloud svg {
+      filter: drop-shadow(0 0 5px rgba(255, 85, 0, 0.45));
+    }
+    .platform-badge.platform-twitch-live svg,
+    .platform-badge.platform-twitch-vod svg,
+    .platform-badge.platform-twitch svg {
+      filter: drop-shadow(0 0 5px rgba(145, 70, 255, 0.55));
+    }
+    .platform-badge.platform-twitch-live .live-dot-pulse,
+    .platform-badge .live-dot-pulse {
+      position: absolute;
+      top: -2px;
+      right: -2px;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #ff3b3b;
+      box-shadow: 0 0 5px #ff3b3b;
+      animation: live-dot-blink 1.2s ease-in-out infinite alternate;
+    }
+    @keyframes live-dot-blink {
+      0%   { transform: scale(0.85); opacity: 0.7; }
+      100% { transform: scale(1.25); opacity: 1;   }
+    }
+    .np-bar {
+      height: 3px;
+      background: var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-bottom: 5px;
+    }
+    .np-fill {
+      height: 100%;
+      background: var(--accent);
+      width: 0%;
+      transition: width 0.4s;
+    }
+    #np-time { font-size: 0.72em; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+    /* ── 分頁選擇 ─────────────────────────────────── */
+    .section { padding: 14px 16px 10px; }
+    .section-label {
+      font-size: 0.7em;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    select {
+      width: 100%;
+      padding: 8px 10px;
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      font-family: inherit;
+      font-size: 0.85em;
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236b7090'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      cursor: pointer;
+    }
+
+    /* ── 操作按鈕 ─────────────────────────────────── */
+    .btn-row { display: flex; gap: 8px; margin-top: 10px; }
+
+    .btn {
+      flex: 1;
+      padding: 8px;
+      border: none;
+      border-radius: 7px;
+      font-family: inherit;
+      font-size: 0.83em;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, opacity 0.2s;
+    }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .btn-project {
+      background: var(--accent);
+      color: #fff;
+    }
+    .btn-project:hover:not(:disabled) { background: #e03030; }
+    .btn-project.active {
+      background: var(--green);
+      color: #0a1205;
+    }
+    .btn-project.active:hover:not(:disabled) { background: #38c96a; }
+
+    .btn-refresh {
+      background: var(--surface);
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+    .btn-refresh:hover { color: var(--text); }
+
+    /* ── 投影狀態標籤 ─────────────────────────────── */
+    .proj-status {
+      margin-top: 8px;
+      font-size: 0.75em;
+      color: var(--muted);
+      text-align: center;
+      min-height: 16px;
+    }
+    .proj-status.ok { color: var(--green); }
+  </style>
+</head>
+<body>
+
+  <!-- 頁首 -->
+  <div class="header">
+    <div class="header-title">Music Overlay</div>
+    <div class="srv-dot" id="srv-dot" title="伺服器連線狀態"></div>
+  </div>
+
+  <!-- 目前播放 -->
+  <div class="now-playing">
+    <img id="np-thumb" src="" alt="">
+    <div class="np-meta">
+      <div id="np-title">等待資訊...</div>
+      <div class="np-bar"><div class="np-fill" id="np-fill"></div></div>
+      <div id="np-time">— / —</div>
+    </div>
+  </div>
+
+  <!-- 分頁選擇與投影控制 -->
+  <div class="section">
+    <div class="section-label">投影分頁</div>
+    <select id="tab-list">
+      <option value="">載入中...</option>
+    </select>
+    <div class="btn-row">
+      <button class="btn btn-project" id="proj-btn" disabled>投影</button>
+      <button class="btn btn-refresh"  id="refresh-btn">重整</button>
+    </div>
+    <div class="proj-status" id="proj-status"></div>
+  </div>
+
+  <script src="i18n.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

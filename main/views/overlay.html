@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Music Player Overlay</title>
+  <style>
+    :root {
+      /* ── 全域樣式變數（可由自訂 CSS 或 OBS 自訂 CSS 覆寫）── */
+      --font-family: 'Microsoft JhengHei', 'Noto Sans TC', 'Segoe UI', Arial, sans-serif;
+      --card-bg: rgba(14, 16, 24, 0.88);
+      --card-blur: 18px;
+      --card-border: 1px solid rgba(255, 255, 255, 0.08);
+      --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+      --text-color: rgba(255, 255, 255, 0.95);
+      --text-muted: rgba(255, 255, 255, 0.6);
+      --track-bg: rgba(255, 255, 255, 0.15);
+      --accent-gradient: linear-gradient(to right, #ff3535, #ff7a35);
+      --spectrum-gradient: linear-gradient(to top, #ff3535 0%, #ff8c00 50%, #ffcc00 100%);
+
+      /* ── Player 1 直向尺寸（放大強化版）── */
+      --p1-width: 380px;
+      --p1-thumb-size: 380px;
+      --p1-thumb-radius: 24px;
+      --p1-info-radius: 22px;
+      --p1-gap: 16px;
+
+      /* ── Player 2 橫向尺寸（回到 125px）── */
+      --p2-width: 650px;
+      --p2-height: 125px;
+      --p2-thumb-size: 125px;
+      --p2-thumb-radius: 18px;
+      --p2-info-radius: 18px;
+      --p2-gap: 12px;
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: transparent;
+      font-family: var(--font-family);
+    }
+
+    /* ════════════════════════════════════════════════════════════════
+       視圖定位：不強制撐滿視窗，嚴格按照元素定義尺寸呈現
+    ════════════════════════════════════════════════════════════════ */
+    .view {
+      display: none;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+    .view.active { display: block; }
+
+    /* ════════════════════════════════════════════════════════════════
+       共用：跑馬燈標題（智慧判定：僅在文字長度溢出容器時啟動）
+    ════════════════════════════════════════════════════════════════ */
+    .marquee-wrap {
+      width: 100%;
+      overflow: hidden;
+      white-space: nowrap;
+      display: block;
+    }
+    .marquee-inner {
+      display: inline-block;
+      white-space: nowrap;
+      vertical-align: middle;
+    }
+    /* 當文字超出可用寬度，由 JS 動態賦予 .scrolling 啟動動畫 */
+    .marquee-wrap.scrolling .marquee-inner {
+      padding-left: 100%;
+      animation: mq-run 14s linear infinite;
+    }
+    @keyframes mq-run {
+      from { transform: translateX(0); }
+      to   { transform: translateX(-100%); }
+    }
+
+    /* ════════════════════════════════════════════════════════════════
+       來源平台 ICON 徽章（歌名尾部標示）
+    ════════════════════════════════════════════════════════════════ */
+    .platform-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      vertical-align: middle;
+      margin-left: 8px;
+      position: relative;
+      top: -1px;
+      flex-shrink: 0;
+    }
+    .platform-badge svg {
+      width: 1.15em;
+      height: 1.15em;
+      display: block;
+    }
+    .platform-badge.platform-youtube svg {
+      filter: drop-shadow(0 0 6px rgba(255, 0, 0, 0.45));
+    }
+    .platform-badge.platform-ytmusic svg {
+      filter: drop-shadow(0 0 6px rgba(255, 0, 0, 0.45));
+    }
+    .platform-badge.platform-spotify svg {
+      filter: drop-shadow(0 0 6px rgba(30, 215, 96, 0.45));
+    }
+    .platform-badge.platform-soundcloud svg {
+      filter: drop-shadow(0 0 6px rgba(255, 85, 0, 0.45));
+    }
+    .platform-badge.platform-twitch-live svg,
+    .platform-badge.platform-twitch-vod svg,
+    .platform-badge.platform-twitch svg {
+      filter: drop-shadow(0 0 6px rgba(145, 70, 255, 0.55));
+    }
+    .platform-badge.platform-twitch-live .live-dot-pulse,
+    .platform-badge .live-dot-pulse {
+      position: absolute;
+      top: -2px;
+      right: -2px;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #ff3b3b;
+      box-shadow: 0 0 6px #ff3b3b;
+      animation: live-dot-blink 1.2s ease-in-out infinite alternate;
+    }
+    @keyframes live-dot-blink {
+      0%   { transform: scale(0.85); opacity: 0.7; }
+      100% { transform: scale(1.25); opacity: 1;   }
+    }
+
+    /* ════════════════════════════════════════════════════════════════
+       PLAYER 1 — 直向版型
+       上：獨立圓角正方形縮圖
+       下：獨立長方形圓角群組（跑馬燈 + 目前秒數/進度條/長度）
+    ════════════════════════════════════════════════════════════════ */
+    .p1-container {
+      width: var(--p1-width);
+      display: flex;
+      flex-direction: column;
+      gap: var(--p1-gap);
+    }
+
+    /* 上方：獨立圓角正方形縮圖 */
+    .p1-thumb-card {
+      width: var(--p1-thumb-size);
+      height: var(--p1-thumb-size);
+      border-radius: var(--p1-thumb-radius);
+      overflow: hidden;
+      position: relative;
+      background: #141622;
+      border: var(--card-border);
+      box-shadow: var(--card-shadow);
+      flex-shrink: 0;
+    }
+    .p1-thumb-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center center;
+      display: block;
+    }
+    .p1-thumb-placeholder {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 4.8em;
+      color: rgba(255, 255, 255, 0.15);
+      background: rgba(18, 20, 30, 0.95);
+    }
+
+    /* 下方：獨立長方形圓角資訊群組 */
+    .p1-info-card {
+      width: var(--p1-width);
+      border-radius: var(--p1-info-radius);
+      background: var(--card-bg);
+      backdrop-filter: blur(var(--card-blur));
+      -webkit-backdrop-filter: blur(var(--card-blur));
+      border: var(--card-border);
+      box-shadow: var(--card-shadow);
+      padding: 18px 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .p1-title-wrap {
+      width: 100%;
+      overflow: hidden;
+    }
+    .p1-title-wrap .marquee-inner {
+      font-size: 1.25em;
+      font-weight: 700;
+      color: var(--text-color);
+      letter-spacing: 0.025em;
+      text-shadow: 0 1px 6px rgba(0, 0, 0, 0.65);
+    }
+    .p1-bottom {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .p1-progress-track {
+      flex: 1;
+      height: 7px;
+      background: var(--track-bg);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .p1-progress-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--accent-gradient);
+      border-radius: 4px;
+      transition: width 0.28s ease;
+    }
+    .p1-time {
+      font-size: 1.08em;
+      font-weight: 700;
+      color: var(--text-muted);
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0.04em;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+    }
+
+    /* ════════════════════════════════════════════════════════════════
+       PLAYER 2 — 橫條版型（高度嚴格 125px）
+       左：獨立圓角正方形縮圖 (125px × 125px)
+       右：獨立長方形圓角群組 (高 125px)
+           右上：跑馬燈標題 + 5 條 Audio Spectrum
+           右下：目前秒數 + 進度條 + 總長度
+    ════════════════════════════════════════════════════════════════ */
+    .p2-container {
+      width: var(--p2-width);
+      height: var(--p2-height);
+      display: flex;
+      gap: var(--p2-gap);
+      align-items: stretch;
+    }
+
+    /* 左側：獨立圓角正方形縮圖 (125px) */
+    .p2-thumb-card {
+      width: var(--p2-thumb-size);
+      height: var(--p2-thumb-size);
+      border-radius: var(--p2-thumb-radius);
+      overflow: hidden;
+      position: relative;
+      background: #141622;
+      border: var(--card-border);
+      box-shadow: var(--card-shadow);
+      flex-shrink: 0;
+    }
+    .p2-thumb-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center center;
+      display: block;
+    }
+    .p2-thumb-placeholder {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.2em;
+      color: rgba(255, 255, 255, 0.15);
+      background: rgba(18, 20, 30, 0.95);
+    }
+
+    /* 右側：獨立長方形圓角資訊群組（高 125px） */
+    .p2-info-card {
+      flex: 1;
+      height: var(--p2-height);
+      min-width: 0;
+      border-radius: var(--p2-info-radius);
+      background: var(--card-bg);
+      backdrop-filter: blur(var(--card-blur));
+      -webkit-backdrop-filter: blur(var(--card-blur));
+      border: var(--card-border);
+      box-shadow: var(--card-shadow);
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    /* 右上：標題 + 5 條 Audio Spectrum */
+    .p2-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      min-width: 0;
+    }
+    .p2-title-wrap {
+      flex: 1;
+      overflow: hidden;
+      min-width: 0;
+      display: flex;
+      align-items: center;
+    }
+    /* 橫向字體加大且更清晰醒目 */
+    .p2-title-wrap .marquee-inner {
+      font-size: 1.22em;
+      font-weight: 700;
+      color: var(--text-color);
+      letter-spacing: 0.02em;
+      text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7);
+    }
+
+    /* ════════════════════════════════════════════════════════════════
+       AUDIO SPECTRUM — 嚴格 5 條音訊頻譜動畫
+    ════════════════════════════════════════════════════════════════ */
+    .spectrum {
+      display: flex;
+      align-items: flex-end;
+      gap: 4px;
+      height: 24px;
+      flex-shrink: 0;
+    }
+    .spectrum i {
+      display: block;
+      width: 4px;
+      border-radius: 2px 2px 0 0;
+      background: var(--spectrum-gradient);
+      transform-origin: bottom center;
+      animation: sdance 0.6s ease-in-out infinite alternate;
+    }
+    .spectrum i:nth-child(1) { height: 10px; animation-duration: 0.45s; animation-delay: 0.00s; }
+    .spectrum i:nth-child(2) { height: 20px; animation-duration: 0.62s; animation-delay: 0.12s; }
+    .spectrum i:nth-child(3) { height: 24px; animation-duration: 0.50s; animation-delay: 0.05s; }
+    .spectrum i:nth-child(4) { height: 16px; animation-duration: 0.68s; animation-delay: 0.18s; }
+    .spectrum i:nth-child(5) { height: 12px; animation-duration: 0.55s; animation-delay: 0.08s; }
+
+    @keyframes sdance {
+      from { transform: scaleY(0.12); opacity: 0.6; }
+      to   { transform: scaleY(1.00); opacity: 1.0; }
+    }
+
+    /* 暫停時停止活動 */
+    .spectrum.paused i {
+      animation-play-state: paused;
+    }
+
+    /* 右下：目前秒數 + 進度條 + 總長度（分列兩側，個體與字體加強放大） */
+    .p2-bottom {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .p2-progress-track {
+      flex: 1;
+      height: 9px;
+      background: var(--track-bg);
+      border-radius: 5px;
+      overflow: hidden;
+      box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
+    }
+    .p2-progress-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--accent-gradient);
+      border-radius: 5px;
+      transition: width 0.28s ease;
+      box-shadow: 0 0 10px rgba(255, 60, 60, 0.4);
+    }
+    .p2-time {
+      font-size: 1.15em;
+      font-weight: 700;
+      color: var(--text-muted);
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0.04em;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+    }
+
+
+  </style>
+</head>
+<body>
+
+  <!-- ════════════════════════════════════════════════════════════
+       PLAYER 1 — 直向版型
+  ════════════════════════════════════════════════════════════ -->
+  <div id="view-player1" class="view">
+    <div class="p1-container">
+
+      <!-- 上：獨立圓角正方形縮圖 -->
+      <div class="p1-thumb-card">
+        <img id="p1-thumb" class="p1-thumb-img" src="" alt="" style="display:none">
+        <div class="p1-thumb-placeholder" id="p1-placeholder">♪</div>
+      </div>
+
+      <!-- 下：獨立長方形圓角資訊群組 -->
+      <div class="p1-info-card">
+        <div class="p1-title-wrap">
+          <div class="marquee-wrap" id="p1-marquee">
+            <span class="marquee-inner" id="p1-title">等待資訊...</span>
+          </div>
+        </div>
+        <div class="p1-bottom">
+          <span class="p1-time" id="p1-cur-time">0:00</span>
+          <div class="p1-progress-track">
+            <div class="p1-progress-fill" id="p1-fill"></div>
+          </div>
+          <span class="p1-time" id="p1-total-time">0:00</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════
+       PLAYER 2 — 橫條版型（高度嚴格 125px）
+  ════════════════════════════════════════════════════════════ -->
+  <div id="view-player2" class="view">
+    <div class="p2-container">
+
+      <!-- 左：獨立圓角正方形縮圖 (125px × 125px) -->
+      <div class="p2-thumb-card">
+        <img id="p2-thumb" class="p2-thumb-img" src="" alt="" style="display:none">
+        <div class="p2-thumb-placeholder" id="p2-placeholder">♪</div>
+      </div>
+
+      <!-- 右：獨立長方形圓角資訊群組 (高 125px) -->
+      <div class="p2-info-card">
+
+        <!-- 右上：標題跑馬燈 + 5 條 Audio Spectrum -->
+        <div class="p2-top">
+          <div class="p2-title-wrap">
+            <div class="marquee-wrap" id="p2-marquee">
+              <span class="marquee-inner" id="p2-title">等待資訊...</span>
+            </div>
+          </div>
+
+          <!-- 嚴格 5 條 Audio Spectrum -->
+          <div class="spectrum" id="p2-spectrum">
+            <i></i><i></i><i></i><i></i><i></i>
+          </div>
+        </div>
+
+        <!-- 右下：目前秒數 + 進度條 + 總長度（分列兩側） -->
+        <div class="p2-bottom">
+          <span class="p2-time" id="p2-cur-time">0:00</span>
+          <div class="p2-progress-track">
+            <div class="p2-progress-fill" id="p2-fill"></div>
+          </div>
+          <span class="p2-time" id="p2-total-time">0:00</span>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+
+
+  <script src="/i18n.js"></script>
+  <script>
+    'use strict';
+
+    // ══════════════════════════════════════════════════════════════
+    // 1. 決定顯示哪個視圖
+    // ══════════════════════════════════════════════════════════════
+    const params  = new URLSearchParams(location.search);
+    const viewKey = (params.get('view') || 'player1').toLowerCase();
+    const viewEl  = document.getElementById('view-' + viewKey);
+
+    if (viewEl) {
+      viewEl.classList.add('active');
+    } else {
+      document.getElementById('view-player1').classList.add('active');
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // 2. 工具函數
+    // ══════════════════════════════════════════════════════════════
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function parseSeconds(t) {
+      if (!t || t === 'N/A' || t === '00:00' || t === '0:00' || t === 'LIVE') return 0;
+      if (typeof t === 'number') return t;
+      const m = String(t).match(/\d{1,2}:\d{2}:\d{2}|\d{1,2}:\d{2}/);
+      if (m) {
+        const parts = m[0].split(':').map(Number);
+        if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
+        if (parts.length === 2) return parts[0] * 60 + parts[1];
+      }
+      return parseFloat(t) || 0;
+    }
+
+    function formatTime(sec) {
+      if (!sec || isNaN(sec)) return '0:00';
+      sec = Math.floor(sec);
+      const h = Math.floor(sec / 3600);
+      const m = Math.floor((sec % 3600) / 60);
+      const s = sec % 60;
+      if (h > 0) return `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+      return `${m}:${String(s).padStart(2,'0')}`;
+    }
+
+    function getPlatformBadgeHtml(platform, isLive) {
+      if (!platform) return '';
+      const p = String(platform).toLowerCase();
+
+      switch (p) {
+        case 'youtube':
+          return `<span class="platform-badge platform-youtube" title="來源：YouTube${isLive ? ' (直播)' : ''}" aria-label="YouTube${isLive ? ' 直播' : ''}">` +
+            `<svg viewBox="0 0 24 24" aria-hidden="true">` +
+              `<path fill="#FF0000" d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814z"/>` +
+              `<polygon fill="#FFFFFF" points="9.545,8.432 15.818,12 9.545,15.568"/>` +
+            `</svg>` +
+            (isLive ? `<span class="live-dot-pulse"></span>` : '') +
+          `</span>`;
+
+        case 'ytmusic':
+          return `<span class="platform-badge platform-ytmusic" title="來源：YouTube Music" aria-label="YouTube Music">` +
+            `<svg viewBox="0 0 24 24" aria-hidden="true">` +
+              `<circle cx="12" cy="12" r="11" fill="#FF0000"/>` +
+              `<circle cx="12" cy="12" r="7" fill="none" stroke="#FFFFFF" stroke-width="1.8"/>` +
+              `<polygon fill="#FFFFFF" points="10,8.5 15.5,12 10,15.5"/>` +
+            `</svg>` +
+          `</span>`;
+
+        case 'spotify':
+          return `<span class="platform-badge platform-spotify" title="來源：Spotify" aria-label="Spotify">` +
+            `<svg viewBox="0 0 24 24" aria-hidden="true">` +
+              `<circle cx="12" cy="12" r="11" fill="#000000"/>` +
+              `<path fill="#1ED760" d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/>` +
+            `</svg>` +
+          `</span>`;
+
+        case 'soundcloud':
+          return `<span class="platform-badge platform-soundcloud" title="來源：SoundCloud" aria-label="SoundCloud">` +
+            `<svg viewBox="0 0 24 24" aria-hidden="true">` +
+              `<path fill="#FF5500" d="M1.175 12.225c-.051 0-.094.046-.101.1l-.233 2.154.233 2.105c.007.058.05.098.101.098.05 0 .09-.04.099-.098l.255-2.105-.27-2.154c0-.057-.045-.1-.09-.1m-.899.828c-.06 0-.091.037-.104.094L0 14.479l.165 1.308c0 .055.045.094.09.094s.089-.045.104-.104l.21-1.319-.21-1.334c0-.061-.044-.09-.09-.09m1.83-1.229c-.061 0-.12.045-.12.104l-.21 2.563.225 2.458c0 .06.045.12.119.12.061 0 .105-.061.121-.12l.254-2.474-.254-2.548c-.016-.06-.061-.12-.121-.12m.945-.089c-.075 0-.135.06-.15.135l-.193 2.64.21 2.544c.016.077.075.138.149.138.075 0 .135-.061.15-.15l.24-2.532-.24-2.623c0-.075-.06-.135-.135-.135l-.031-.017zm1.155.36c-.005-.09-.075-.149-.159-.149-.09 0-.158.06-.164.149l-.217 2.43.2 2.563c0 .09.075.157.159.157.074 0 .148-.068.148-.158l.227-2.563-.227-2.444.033.015zm.809-1.709c-.101 0-.18.09-.18.181l-.21 3.957.187 2.563c0 .09.08.164.18.164.094 0 .174-.09.18-.18l.209-2.563-.209-3.972c-.008-.104-.088-.18-.18-.18m.959-.914c-.105 0-.195.09-.203.194l-.18 4.872.165 2.548c0 .12.09.209.195.209.104 0 .194-.089.21-.209l.193-2.548-.192-4.856c-.016-.12-.105-.21-.21-.21m.989-.449c-.121 0-.211.089-.225.209l-.165 5.275.165 2.52c.014.119.104.225.225.225.119 0 .225-.105.225-.225l.195-2.52-.196-5.275c0-.12-.105-.225-.225-.225m1.245.045c0-.135-.105-.24-.24-.24-.119 0-.24.105-.24.24l-.149 5.441.149 2.503c.016.135.121.24.256.24s.24-.105.24-.24l.164-2.503-.164-5.456-.016.015zm.749-.134c-.135 0-.255.119-.255.254l-.15 5.322.15 2.473c0 .15.12.255.255.255s.255-.12.255-.27l.15-2.474-.165-5.307c0-.148-.12-.27-.271-.27m1.005.166c-.164 0-.284.135-.284.285l-.103 5.143.135 2.474c0 .149.119.277.284.277.149 0 .271-.12.284-.285l.121-2.443-.135-5.112c-.012-.164-.135-.285-.285-.285m1.184-.945c-.045-.029-.105-.044-.165-.044s-.119.015-.165.044c-.09.054-.149.15-.149.255v.061l-.104 6.048.115 2.449v.008c.008.06.03.135.074.18.058.061.142.104.234.104.08 0 .158-.044.209-.09.058-.06.091-.135.091-.225l.015-.24.117-2.203-.135-6.086c0-.104-.061-.193-.135-.239l-.002-.022zm1.006-.547c-.045-.045-.09-.061-.15-.061-.074 0-.149.016-.209.061-.075.061-.119.15-.119.24v.029l-.137 6.609.076 1.215.061 1.185c0 .164.148.314.328.314.181 0 .33-.15.33-.329l.15-2.414-.15-6.637c0-.12-.074-.221-.165-.277m8.934 3.777c-.405 0-.795.086-1.139.232-.24-2.654-2.46-4.736-5.188-4.736-.659 0-1.305.135-1.889.359-.225.09-.27.18-.285.359v9.368c.016.18.15.33.33.345h8.185C22.681 17.218 24 15.914 24 14.28s-1.319-2.952-2.938-2.952"/>` +
+            `</svg>` +
+          `</span>`;
+
+        case 'twitch-live':
+          return `<span class="platform-badge platform-twitch-live" title="來源：Twitch (直播)" aria-label="Twitch 直播">` +
+            `<svg viewBox="0 0 24 24" aria-hidden="true">` +
+              `<path fill="#9146FF" d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714Z"/>` +
+            `</svg>` +
+            `<span class="live-dot-pulse"></span>` +
+          `</span>`;
+
+        case 'twitch-vod':
+        case 'twitch':
+          return `<span class="platform-badge platform-twitch-vod" title="來源：Twitch (記錄檔)" aria-label="Twitch 記錄檔">` +
+            `<svg viewBox="0 0 24 24" aria-hidden="true">` +
+              `<path fill="#9146FF" d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714Z"/>` +
+            `</svg>` +
+          `</span>`;
+
+        default:
+          return '';
+      }
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // 3. 更新播放器視圖 DOM
+    // ══════════════════════════════════════════════════════════════
+    let lastYouTubeData = null;
+    let lastRenderedKey = null;
+
+    function updateMarquee(title, platform) {
+      [
+        { wrap: 'p1-marquee', inner: 'p1-title' },
+        { wrap: 'p2-marquee', inner: 'p2-title' }
+      ].forEach(({ wrap, inner }) => {
+        const wrapEl  = document.getElementById(wrap);
+        const innerEl = document.getElementById(inner);
+        if (!wrapEl || !innerEl) return;
+
+        const isIdle = !title || title === '等待資訊...' || title.startsWith('等待');
+        const badgeHtml = isIdle ? '' : getPlatformBadgeHtml(platform || 'youtube');
+
+        innerEl.innerHTML = `<span class="title-text">${escapeHtml(title)}</span>${badgeHtml}`;
+
+        // 移除滾動樣式以正確測量文字原始自然寬度
+        wrapEl.classList.remove('scrolling');
+        innerEl.style.animationDuration = '';
+
+        requestAnimationFrame(() => {
+          // 若文字寬度大於容器寬度，啟動跑馬燈動畫；否則維持靜止居左
+          if (innerEl.scrollWidth > wrapEl.clientWidth && wrapEl.clientWidth > 0) {
+            const dur = Math.max(12, Math.floor(innerEl.scrollWidth / 35));
+            innerEl.style.animationDuration = `${dur}s`;
+            wrapEl.classList.add('scrolling');
+          } else {
+            wrapEl.classList.remove('scrolling');
+          }
+        });
+      });
+    }
+
+    function applyYouTube(d) {
+      if (!d) return;
+      lastYouTubeData = d;
+
+      const isPlaying = d.videoStatus === 'playing';
+
+      // — 5 條 Audio Spectrum 播放/暫停控制 —
+      const spectrum = document.getElementById('p2-spectrum');
+      if (spectrum) {
+        spectrum.classList.toggle('paused', !isPlaying);
+      }
+
+      // — 標題：支援歌手/實況主組合標題與跑馬燈更新 —
+      const rawTitle = d.title || '等待資訊...';
+      const artist = d.artist || (d.extra && (d.extra.channel || d.extra.streamer)) || '';
+      let displayTitle = rawTitle;
+      if (artist && !rawTitle.toLowerCase().includes(artist.toLowerCase())) {
+        displayTitle = `${rawTitle} · ${artist}`;
+      }
+
+      const platform = d.platform || (d.isLive ? 'twitch-live' : 'youtube');
+      const renderKey = `${displayTitle}__${platform}`;
+
+      if (renderKey !== lastRenderedKey) {
+        lastRenderedKey = renderKey;
+        updateMarquee(displayTitle, platform);
+      }
+
+      // — 縮圖（16:9 無黑邊，並支援備用網址）—
+      [
+        { img: 'p1-thumb', ph: 'p1-placeholder' },
+        { img: 'p2-thumb', ph: 'p2-placeholder' }
+      ].forEach(({ img, ph }) => {
+        const imgEl = document.getElementById(img);
+        const phEl  = document.getElementById(ph);
+        if (!imgEl || !phEl) return;
+        if (d.thumbnail) {
+          if (imgEl.src !== d.thumbnail) {
+            imgEl.src = d.thumbnail;
+            imgEl.onerror = () => {
+              if (imgEl.src.includes('maxresdefault.jpg')) {
+                imgEl.src = imgEl.src.replace('maxresdefault.jpg', 'mqdefault.jpg');
+              } else if (imgEl.src.includes('-t500x500.')) {
+                imgEl.src = imgEl.src.replace('-t500x500.', '-large.');
+              }
+            };
+          }
+          imgEl.style.display = 'block';
+          phEl.style.display  = 'none';
+        } else {
+          imgEl.style.display = 'none';
+          phEl.style.display  = 'flex';
+        }
+      });
+
+      // — 進度條 & 時間（支援一般歌曲、VOD 記錄檔與 Live 直播）—
+      const isLiveStream = Boolean(d.isLive || d.duration === 'LIVE' || d.platform === 'twitch-live');
+
+      let pct = '0%';
+      let curStr = '0:00';
+      let totStr = '0:00';
+
+      if (isLiveStream) {
+        pct = '100%';
+        curStr = d.currentTime && d.currentTime !== 'LIVE' ? `LIVE ${d.currentTime}` : 'LIVE';
+        totStr = (d.extra && d.extra.category) ? d.extra.category : ((d.extra && d.extra.viewers) ? `${d.extra.viewers} 觀眾` : '直播中');
+      } else {
+        const curSec = parseSeconds(d.currentTime);
+        const totSec = parseSeconds(d.duration);
+        pct    = totSec > 0 ? (Math.min(curSec / totSec, 1) * 100).toFixed(3) + '%' : '0%';
+        curStr = formatTime(curSec);
+        totStr = formatTime(totSec);
+      }
+
+      [
+        { fill: 'p1-fill', cur: 'p1-cur-time', tot: 'p1-total-time' },
+        { fill: 'p2-fill', cur: 'p2-cur-time', tot: 'p2-total-time' }
+      ].forEach(({ fill, cur, tot }) => {
+        const fillEl = document.getElementById(fill);
+        const curEl  = document.getElementById(cur);
+        const totEl  = document.getElementById(tot);
+        if (fillEl) fillEl.style.width = pct;
+        if (curEl)  curEl.textContent  = curStr;
+        if (totEl)  totEl.textContent  = totStr;
+      });
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // 4. WebSocket 連線
+    // ══════════════════════════════════════════════════════════════
+    let ws, retryTimer;
+
+    function connect() {
+      const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+      ws = new WebSocket(`${proto}//${location.host}`);
+
+      ws.addEventListener('open', () => {
+        clearTimeout(retryTimer);
+      });
+
+      ws.addEventListener('message', e => {
+        let msg;
+        try { msg = JSON.parse(e.data); } catch { return; }
+
+        if (msg.type === 'init')    applyYouTube(msg.data.media || msg.data.youtube);
+        if (msg.type === 'youtube') applyYouTube(msg.data);
+        if (msg.type === 'media')   applyYouTube(msg.data);
+      });
+
+      ws.addEventListener('error', () => {});
+
+      ws.addEventListener('close', () => {
+        retryTimer = setTimeout(connect, 3000);
+      });
+    }
+
+    window.addEventListener('resize', () => {
+      if (lastYouTubeData) {
+        lastRenderedKey = null;
+        applyYouTube(lastYouTubeData);
+      }
+    });
+
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(() => {
+        if (lastYouTubeData) {
+          lastRenderedKey = null;
+          applyYouTube(lastYouTubeData);
+        }
+      });
+    }
+
+    connect();
+  </script>
+</body>
+</html>

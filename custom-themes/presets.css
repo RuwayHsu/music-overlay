@@ -1,0 +1,117 @@
+/**
+ * ================================================================
+ * YouTube Music Player Overlay — 精選預設主題包 (Presets)
+ * ================================================================
+ * 使用方式：
+ *   複製任一主題區塊中的 CSS 代碼，貼入 OBS 瀏覽器來源的「自訂 CSS」中。
+ *   適用於 Player 1（直向）與 Player 2（橫向）。
+ */
+
+/* ────────────────────────────────────────────────────────────────
+   主題 1：Cyberpunk Neon (賽博龐克霓虹)
+   特點：青藍與紫粉對比、強烈科技感發光邊框與頻譜
+   ──────────────────────────────────────────────────────────────── */
+/*
+:root {
+  --card-bg: rgba(10, 10, 20, 0.92);
+  --card-blur: 20px;
+  --card-border: 1px solid rgba(0, 240, 255, 0.35);
+  --card-shadow: 0 0 25px rgba(0, 240, 255, 0.25), 0 10px 30px rgba(0,0,0,0.7);
+  --text-color: #00f0ff;
+  --text-muted: rgba(255, 0, 128, 0.85);
+  --track-bg: rgba(0, 240, 255, 0.15);
+  --accent-gradient: linear-gradient(to right, #00f0ff, #ff007f);
+  --spectrum-gradient: linear-gradient(to top, #ff007f 0%, #7000ff 50%, #00f0ff 100%);
+}
+.p1-thumb-card, .p2-thumb-card {
+  border: 1px solid rgba(255, 0, 128, 0.45) !important;
+  box-shadow: 0 0 20px rgba(255, 0, 128, 0.3) !important;
+}
+.p1-title-wrap .marquee-inner, .p2-title-wrap .marquee-inner {
+  text-shadow: 0 0 10px rgba(0, 240, 255, 0.7) !important;
+}
+.spectrum i {
+  box-shadow: 0 0 8px #00f0ff;
+}
+*/
+
+/* ────────────────────────────────────────────────────────────────
+   主題 2：Sakura Blossom (日系粉櫻磨砂)
+   特點：柔和粉白毛玻璃、夢幻櫻花漸層進度條
+   ──────────────────────────────────────────────────────────────── */
+/*
+:root {
+  --card-bg: rgba(36, 24, 30, 0.82);
+  --card-blur: 24px;
+  --card-border: 1px solid rgba(255, 183, 197, 0.25);
+  --card-shadow: 0 8px 30px rgba(255, 150, 175, 0.15);
+  --text-color: #fff0f5;
+  --text-muted: rgba(255, 192, 203, 0.75);
+  --track-bg: rgba(255, 255, 255, 0.12);
+  --accent-gradient: linear-gradient(to right, #ff9a9e, #fecfef);
+  --spectrum-gradient: linear-gradient(to top, #ff758c 0%, #ff7eb3 100%);
+}
+.p1-thumb-card, .p2-thumb-card {
+  border: 1px solid rgba(255, 183, 197, 0.3) !important;
+}
+.spectrum i {
+  border-radius: 4px !important;
+}
+*/
+
+/* ────────────────────────────────────────────────────────────────
+   主題 3：Retro Hacker Terminal (復古終端綠)
+   特點：純黑底色搭配駭客亮綠、硬派等寬字體與科技氛圍
+   ──────────────────────────────────────────────────────────────── */
+/*
+:root {
+  --font-family: 'Consolas', 'Courier New', monospace;
+  --card-bg: rgba(5, 12, 8, 0.95);
+  --card-blur: 8px;
+  --card-border: 1px solid #00ff66;
+  --card-shadow: 0 0 20px rgba(0, 255, 102, 0.2);
+  --text-color: #00ff66;
+  --text-muted: rgba(0, 255, 102, 0.65);
+  --track-bg: rgba(0, 255, 102, 0.2);
+  --accent-gradient: linear-gradient(to right, #00ff66, #00cc44);
+  --spectrum-gradient: linear-gradient(to top, #008833 0%, #00ff66 100%);
+  --p1-thumb-radius: 6px;
+  --p1-info-radius: 6px;
+  --p2-thumb-radius: 6px;
+  --p2-info-radius: 6px;
+}
+.p1-thumb-card, .p2-thumb-card {
+  border: 1px solid #00ff66 !important;
+}
+.marquee-inner {
+  text-shadow: 0 0 8px rgba(0, 255, 102, 0.6);
+}
+*/
+
+/* ────────────────────────────────────────────────────────────────
+   主題 4：Nordic Minimalist Light (北歐極簡淺白)
+   特點：適合明亮風格實況，純淨白底與活力薄荷綠
+   ──────────────────────────────────────────────────────────────── */
+/*
+:root {
+  --card-bg: rgba(255, 255, 255, 0.94);
+  --card-blur: 20px;
+  --card-border: 1px solid rgba(0, 0, 0, 0.08);
+  --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+  --text-color: #1a202c;
+  --text-muted: #4a5568;
+  --track-bg: rgba(0, 0, 0, 0.08);
+  --accent-gradient: linear-gradient(to right, #00b4d8, #0077b6);
+  --spectrum-gradient: linear-gradient(to top, #0077b6 0%, #48cae4 100%);
+}
+.p1-thumb-card, .p2-thumb-card {
+  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1) !important;
+}
+.marquee-inner {
+  text-shadow: none !important;
+}
+.p1-time, .p2-time {
+  color: #4a5568 !important;
+}
+*/

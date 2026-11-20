@@ -1,0 +1,2304 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>中控台 — Music Player Overlay</title>
+  <style>
+    :root {
+      --bg:       #07080f;
+      --surface:  #0e1020;
+      --surface2: #161927;
+      --surface3: #1c2035;
+      --border:   #1f2540;
+      --border2:  #2a3052;
+      --text:     #e8ecf8;
+      --muted:    #6b7899;
+      --muted2:   #4a5372;
+      --accent:   #ff3b3b;
+      --accent-hover: #e02f2f;
+      --green:    #22c55e;
+      --yellow:   #eab308;
+      --red:      #ef4444;
+      --pink:     #ff69b4;
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    /* ── 全域捲軸 ── */
+    * { scrollbar-width: thin; scrollbar-color: #1e2540 #08090f; }
+    ::-webkit-scrollbar { width: 7px; height: 7px; }
+    ::-webkit-scrollbar-track { background: #08090f; }
+    ::-webkit-scrollbar-thumb { background: #1e2540; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #2e3a5c; }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+    }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Microsoft JhengHei', 'Noto Sans TC', 'Segoe UI', Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ══════════════════════════════
+       頂部導覽列
+    ══════════════════════════════ */
+    header {
+      height: 52px;
+      min-height: 52px;
+      padding: 0 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(10, 12, 22, 0.97);
+      backdrop-filter: blur(12px);
+      z-index: 200;
+      flex-shrink: 0;
+    }
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    header h1 {
+      font-size: 1.05em;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      color: var(--text);
+    }
+    .brand-badge-group {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      user-select: none;
+    }
+    /* 尊貴 Prime 金色掃光徽章 */
+    .badge-prime {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2.5px 8px;
+      border-radius: 5px;
+      font-size: 0.65em;
+      font-weight: 900;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      background: linear-gradient(135deg, #ffd700 0%, #f59e0b 50%, #d97706 100%);
+      color: #1a0f00;
+      border: 1px solid rgba(255, 235, 120, 0.8);
+      box-shadow: 0 0 12px rgba(245, 158, 11, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.85);
+      overflow: hidden;
+      line-height: 1;
+    }
+    .badge-prime::after {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -120%;
+      width: 60%;
+      height: 200%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.75), transparent);
+      transform: rotate(25deg);
+      animation: primeSheen 3.6s infinite ease-in-out;
+    }
+    @keyframes primeSheen {
+      0%, 60% { left: -120%; }
+      80%, 100% { left: 160%; }
+    }
+    /* 尊貴 Plus 炫彩霓虹標籤 */
+    .badge-plus {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5px 6.5px;
+      border-radius: 4px;
+      font-size: 0.7em;
+      font-weight: 900;
+      background: linear-gradient(135deg, #ff0055 0%, #ff5500 100%);
+      color: #ffffff;
+      border: 1px solid rgba(255, 100, 150, 0.85);
+      box-shadow: 0 0 10px rgba(255, 0, 85, 0.55);
+      line-height: 1;
+      text-shadow: 0 0 4px rgba(255, 255, 255, 0.8);
+      animation: plusPulse 2.4s infinite ease-in-out;
+    }
+    @keyframes plusPulse {
+      0%, 100% { transform: scale(1); box-shadow: 0 0 8px rgba(255, 0, 85, 0.4); }
+      50% { transform: scale(1.1); box-shadow: 0 0 16px rgba(255, 0, 85, 0.8), 0 0 24px rgba(255, 85, 0, 0.5); }
+    }
+    /* 尊貴 Insider 霓虹紫光微呼吸徽章 */
+    .badge-insider {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 2.5px 8px;
+      border-radius: 5px;
+      font-size: 0.63em;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      background: linear-gradient(135deg, rgba(168, 85, 247, 0.22) 0%, rgba(99, 102, 241, 0.3) 100%);
+      color: #e9d5ff;
+      border: 1px solid rgba(192, 132, 252, 0.6);
+      box-shadow: 0 0 10px rgba(168, 85, 247, 0.35);
+      backdrop-filter: blur(4px);
+      line-height: 1;
+    }
+    .badge-insider-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #c084fc;
+      box-shadow: 0 0 6px #c084fc;
+      animation: insiderPulse 1.8s infinite ease-in-out;
+    }
+    @keyframes insiderPulse {
+      0%, 100% { transform: scale(1); opacity: 0.8; box-shadow: 0 0 4px #c084fc; }
+      50% { transform: scale(1.35); opacity: 1; box-shadow: 0 0 10px #e879f9, 0 0 16px rgba(192, 132, 252, 0.8); }
+    }
+
+    /* 頂部狀態指示 */
+    .header-status {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .status-chip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 4px 10px 4px 7px;
+      font-size: 0.72em;
+      color: var(--muted);
+      cursor: default;
+      transition: border-color 0.3s;
+    }
+    .status-chip.ok   { border-color: rgba(34, 197, 94, 0.3); color: #86efac; }
+    .status-chip.warn { border-color: rgba(234, 179, 8, 0.3); color: #fde047; }
+    .status-chip.err  { border-color: rgba(239, 68, 68, 0.3); color: #fca5a5; }
+    .chip-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--muted2);
+      transition: background 0.3s, box-shadow 0.3s;
+      flex-shrink: 0;
+    }
+    .status-chip.ok   .chip-dot { background: var(--green); box-shadow: 0 0 6px rgba(34, 197, 94, 0.7); }
+    .status-chip.warn .chip-dot { background: var(--yellow); box-shadow: 0 0 6px rgba(234, 179, 8, 0.7); }
+    .status-chip.err  .chip-dot { background: var(--red); box-shadow: 0 0 6px rgba(239, 68, 68, 0.7); }
+
+    /* 看我看我按鈕 */
+    .nav-link-btn {
+      padding: 7px 18px;
+      border-radius: 9px;
+      font-size: 0.82em;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      background: rgba(255, 105, 180, 0.10);
+      color: #ffb8db;
+      border: 1px solid rgba(255, 105, 180, 0.45);
+      box-shadow: 0 0 10px rgba(255, 105, 180, 0.15);
+      transition: all 0.22s ease;
+    }
+    .nav-link-btn:hover {
+      background: #ff69b4;
+      color: #fff;
+      border-color: #ff69b4;
+      box-shadow: 0 0 16px rgba(255, 105, 180, 0.7), 0 0 30px rgba(255, 105, 180, 0.3);
+      transform: translateY(-1px);
+    }
+
+    /* ══════════════════════════════
+       主體三欄佈局
+    ══════════════════════════════ */
+    .app-body {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* ── 左側邊欄 ── */
+    .sidebar {
+      width: 240px;
+      min-width: 240px;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+    .sidebar-section {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .sidebar-section:last-child {
+      border-bottom: none;
+    }
+    .sidebar-label {
+      font-size: 0.68em;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    /* 狀態詳情（左側欄） */
+    .check-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 9px;
+      padding: 8px 10px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 7px;
+    }
+    .check-row:last-child { margin-bottom: 0; }
+    .check-dot-side {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--muted2);
+      flex-shrink: 0;
+      margin-top: 3px;
+      transition: background 0.3s, box-shadow 0.3s;
+    }
+    .check-dot-side.ok   { background: var(--green); box-shadow: 0 0 7px rgba(34, 197, 94, 0.55); }
+    .check-dot-side.warn { background: var(--yellow); box-shadow: 0 0 7px rgba(234, 179, 8, 0.55); }
+    .check-dot-side.err  { background: var(--red); box-shadow: 0 0 7px rgba(239, 68, 68, 0.55); }
+    .check-row-info { flex: 1; min-width: 0; }
+    .check-row-name {
+      font-size: 0.78em;
+      font-weight: 600;
+      color: var(--text);
+      line-height: 1.3;
+    }
+    .check-row-desc {
+      font-size: 0.7em;
+      color: var(--muted);
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* 現正播放（左側欄） */
+    .now-playing-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 9px 10px;
+      display: none;
+    }
+    .now-playing-card.visible { display: block; }
+    .np-thumb-row {
+      display: flex;
+      gap: 9px;
+      align-items: center;
+    }
+    #np-thumb {
+      width: 38px;
+      height: 38px;
+      border-radius: 6px;
+      object-fit: cover;
+      background: var(--surface3);
+      flex-shrink: 0;
+    }
+    .np-meta { flex: 1; min-width: 0; }
+    #np-title {
+      font-size: 0.78em;
+      font-weight: 600;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      min-width: 0;
+    }
+    .np-title-text {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .platform-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      vertical-align: middle;
+      margin-left: 6px;
+      position: relative;
+      top: -1px;
+      flex-shrink: 0;
+    }
+    .platform-badge svg {
+      width: 1.15em;
+      height: 1.15em;
+      display: block;
+    }
+    .platform-badge.platform-youtube svg {
+      filter: drop-shadow(0 0 6px rgba(255, 0, 0, 0.45));
+    }
+    .platform-badge.platform-ytmusic svg {
+      filter: drop-shadow(0 0 6px rgba(255, 0, 0, 0.45));
+    }
+    .platform-badge.platform-spotify svg {
+      filter: drop-shadow(0 0 6px rgba(30, 215, 96, 0.45));
+    }
+    .platform-badge.platform-soundcloud svg {
+      filter: drop-shadow(0 0 6px rgba(255, 85, 0, 0.45));
+    }
+    .platform-badge.platform-twitch-live svg,
+    .platform-badge.platform-twitch-vod svg,
+    .platform-badge.platform-twitch svg {
+      filter: drop-shadow(0 0 6px rgba(145, 70, 255, 0.55));
+    }
+    .platform-badge.platform-twitch-live .live-dot-pulse {
+      position: absolute;
+      top: -2px;
+      right: -2px;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #ff3b3b;
+      box-shadow: 0 0 5px #ff3b3b;
+      animation: live-dot-blink 1.2s ease-in-out infinite alternate;
+    }
+    @keyframes live-dot-blink {
+      0%   { transform: scale(0.85); opacity: 0.7; }
+      100% { transform: scale(1.25); opacity: 1;   }
+    }
+    .np-sub {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin-top: 3px;
+    }
+    .np-badge {
+      padding: 1px 6px;
+      border-radius: 3px;
+      font-size: 0.65em;
+      font-weight: 700;
+    }
+    .np-badge.playing { background: rgba(34, 197, 94, 0.18); color: var(--green); }
+    .np-badge.paused  { background: rgba(234, 179, 8, 0.18); color: var(--yellow); }
+    .np-time {
+      font-size: 0.68em;
+      color: var(--muted);
+    }
+
+    /* 警告訊息（左側欄） */
+    .alert-mini {
+      border-radius: 7px;
+      padding: 9px 10px;
+      font-size: 0.74em;
+      line-height: 1.5;
+      display: none;
+    }
+    .alert-mini.visible { display: block; }
+    .alert-mini.warning {
+      background: rgba(234, 179, 8, 0.07);
+      border: 1px solid rgba(234, 179, 8, 0.2);
+      color: #fef08a;
+    }
+    .alert-mini.error {
+      background: rgba(239, 68, 68, 0.07);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      color: #fca5a5;
+    }
+    .alert-mini-title {
+      font-weight: 700;
+      margin-bottom: 5px;
+    }
+    .alert-mini ol {
+      padding-left: 15px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    /* 主題預設按鈕（左側欄） */
+    .preset-list {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .preset-btn-side {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 7px 10px;
+      border-radius: 7px;
+      font-size: 0.78em;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      text-align: left;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+    }
+    .preset-btn-side:hover {
+      color: var(--text);
+      border-color: var(--border2);
+      background: var(--surface3);
+    }
+    .preset-btn-side.active {
+      background: rgba(255, 59, 59, 0.1);
+      border-color: rgba(255, 59, 59, 0.5);
+      color: #ff7070;
+    }
+    .preset-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* ── 主內容區 ── */
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* 預覽舞台工具列 */
+    .preview-toolbar {
+      height: 44px;
+      min-height: 44px;
+      padding: 0 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(12, 15, 26, 0.9);
+      flex-shrink: 0;
+    }
+
+    .tab-switcher {
+      display: inline-flex;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 2px;
+      gap: 2px;
+    }
+    .tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      padding: 4px 12px;
+      border-radius: 5px;
+      font-size: 0.75em;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .tab-btn.active {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .toolbar-sep {
+      flex: 1;
+    }
+
+    .btn {
+      padding: 5px 12px;
+      border-radius: 6px;
+      font-size: 0.75em;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-family: inherit;
+      transition: all 0.15s;
+      border: 1px solid transparent;
+      white-space: nowrap;
+    }
+    .btn-ghost {
+      background: transparent;
+      color: var(--muted);
+      border-color: var(--border);
+    }
+    .btn-ghost:hover {
+      background: var(--surface2);
+      color: var(--text);
+      border-color: var(--border2);
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      border-color: transparent;
+    }
+    .btn-primary:hover {
+      background: var(--accent-hover);
+    }
+    .btn-copy {
+      background: rgba(255, 59, 59, 0.12);
+      color: #ff7070;
+      border-color: rgba(255, 59, 59, 0.35);
+    }
+    .btn-copy:hover {
+      background: var(--accent);
+      color: #fff;
+      border-color: transparent;
+    }
+
+    /* 預覽舞台 */
+    .preview-stage {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #040509;
+      background-image:
+        linear-gradient(45deg, #0b0d18 25%, transparent 25%),
+        linear-gradient(-45deg, #0b0d18 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #0b0d18 75%),
+        linear-gradient(-45deg, transparent 75%, #0b0d18 75%);
+      background-size: 18px 18px;
+      background-position: 0 0, 0 9px, 9px -9px, -9px 0px;
+      overflow: auto;
+      position: relative;
+      min-height: 0;
+      padding: 24px;
+    }
+
+    .iframe-wrapper {
+      position: relative;
+      margin: auto;
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.04);
+      transition: width 0.3s ease, height 0.3s ease;
+      background: transparent;
+    }
+    #preview-frame {
+      border: none;
+      display: block;
+      background: transparent;
+      overflow: hidden;
+    }
+
+    /* ── 底部調色 + CSS 編輯區 ── */
+    .editor-panel {
+      height: 340px;
+      min-height: 340px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+
+    /* 編輯器 tab 列 */
+    .editor-tabs {
+      height: 38px;
+      min-height: 38px;
+      display: flex;
+      align-items: stretch;
+      border-bottom: 1px solid var(--border);
+      background: rgba(10, 12, 20, 0.8);
+      flex-shrink: 0;
+    }
+    .editor-tab {
+      padding: 0 16px;
+      font-size: 0.75em;
+      font-weight: 600;
+      color: var(--muted);
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      font-family: inherit;
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+    }
+    .editor-tab.active {
+      color: var(--text);
+      border-bottom-color: var(--accent);
+    }
+    .editor-tab:hover:not(.active) {
+      color: var(--text);
+    }
+    .editor-tab-spacer { flex: 1; }
+    .editor-tab-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 14px;
+    }
+
+    /* Tab 面板 */
+    .tab-panel {
+      display: none;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+    }
+    .tab-panel.active {
+      display: flex;
+    }
+
+    /* 調色盤面板 */
+    #panel-palette {
+      overflow-y: auto;
+      flex-direction: column;
+    }
+    .color-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      padding: 14px 16px;
+    }
+    @media (max-width: 900px) {
+      .color-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    .color-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      padding: 11px 13px;
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+    }
+    .color-card-title {
+      font-size: 0.73em;
+      font-weight: 700;
+      color: var(--text);
+      padding-bottom: 5px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      letter-spacing: 0.02em;
+    }
+    .control-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+    }
+    .control-row label {
+      font-size: 0.72em;
+      color: var(--muted);
+      font-weight: 500;
+      white-space: nowrap;
+    }
+    .picker-wrap {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      flex: 1;
+      justify-content: flex-end;
+    }
+    .picker-wrap input[type="color"] {
+      -webkit-appearance: none;
+      appearance: none;
+      border: 1px solid var(--border2);
+      width: 28px;
+      height: 24px;
+      border-radius: 5px;
+      cursor: pointer;
+      background: transparent;
+      padding: 0;
+      flex-shrink: 0;
+    }
+    .picker-wrap input[type="color"]::-webkit-color-swatch-wrapper { padding: 1px; }
+    .picker-wrap input[type="color"]::-webkit-color-swatch { border: none; border-radius: 3px; }
+    .picker-wrap input[type="range"] {
+      accent-color: var(--accent);
+      height: 4px;
+      border-radius: 2px;
+      cursor: pointer;
+      width: 68px;
+      flex-shrink: 0;
+    }
+    .val-badge {
+      font-size: 0.68em;
+      font-family: monospace;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--border);
+      padding: 2px 5px;
+      border-radius: 3px;
+      min-width: 36px;
+      text-align: center;
+      color: var(--muted);
+    }
+    .color-code {
+      font-size: 0.68em;
+      font-family: monospace;
+      color: var(--muted);
+      min-width: 52px;
+      text-align: right;
+    }
+
+    /* CSS 程式碼面板 */
+    #panel-css {
+      flex-direction: column;
+    }
+    .editor-body {
+      flex: 1;
+      min-height: 0;
+      background: #080910;
+      position: relative;
+    }
+    #css-code-input {
+      width: 100%;
+      height: 100%;
+      background: transparent;
+      color: #7dd3fc;
+      border: none;
+      padding: 14px 18px;
+      font-family: 'Consolas', 'Fira Code', 'Courier New', monospace;
+      font-size: 12.5px;
+      line-height: 1.6;
+      resize: none;
+      outline: none;
+      white-space: pre;
+      scrollbar-width: thin;
+      scrollbar-color: #1c2540 #06070c;
+    }
+    #css-code-input::-webkit-scrollbar { width: 8px; height: 8px; }
+    #css-code-input::-webkit-scrollbar-track { background: #06070c; }
+    #css-code-input::-webkit-scrollbar-thumb {
+      background: #1c2540;
+      border-radius: 3px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    #css-code-input::-webkit-scrollbar-thumb:hover {
+      background: var(--accent);
+      box-shadow: 0 0 8px rgba(255, 59, 59, 0.5);
+    }
+
+    /* ══════════════════════════════
+       Twitch 機器人控制面板 (Prime Plus)
+    ══════════════════════════════ */
+    .twitch-bot-container {
+      display: grid;
+      grid-template-columns: 1.25fr 1fr;
+      gap: 16px;
+      padding: 14px 18px;
+      height: 100%;
+      overflow-y: auto;
+    }
+    .twitch-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .twitch-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      padding-bottom: 10px;
+    }
+    .twitch-card-title {
+      font-size: 0.88em;
+      font-weight: 700;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .twitch-status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 0.72em;
+      font-weight: 600;
+      background: var(--surface3);
+      border: 1px solid var(--border2);
+      color: var(--muted);
+      transition: all 0.3s;
+    }
+    .twitch-status-pill.connected {
+      border-color: rgba(34, 197, 94, 0.4);
+      color: #86efac;
+      background: rgba(34, 197, 94, 0.1);
+    }
+    .twitch-status-pill.connecting {
+      border-color: rgba(234, 179, 8, 0.4);
+      color: #fde047;
+      background: rgba(234, 179, 8, 0.1);
+    }
+    .twitch-pill-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--muted2);
+      transition: all 0.3s;
+    }
+    .twitch-status-pill.connected .twitch-pill-dot {
+      background: var(--green);
+      box-shadow: 0 0 6px rgba(34, 197, 94, 0.8);
+    }
+    .twitch-status-pill.connecting .twitch-pill-dot {
+      background: var(--yellow);
+      box-shadow: 0 0 6px rgba(234, 179, 8, 0.8);
+    }
+    .twitch-form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .form-item {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .form-item-full {
+      grid-column: 1 / -1;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .form-item label, .form-item-full label {
+      font-size: 0.75em;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .form-item input[type="text"],
+    .form-item input[type="number"],
+    .form-item-full input[type="text"],
+    .form-item-full input[type="password"] {
+      background: var(--surface3);
+      border: 1px solid var(--border2);
+      border-radius: 6px;
+      padding: 7px 10px;
+      color: var(--text);
+      font-size: 0.82em;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .form-item input:focus, .form-item-full input:focus {
+      border-color: #9146ff;
+      box-shadow: 0 0 8px rgba(145, 70, 255, 0.25);
+    }
+    .field-hint {
+      font-size: 0.68em;
+      color: var(--muted2);
+      line-height: 1.4;
+    }
+    .input-with-prefix {
+      display: flex;
+      align-items: center;
+      background: var(--surface3);
+      border: 1px solid var(--border2);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .input-prefix {
+      padding: 0 10px;
+      font-weight: 700;
+      color: #9146ff;
+      background: rgba(145, 70, 255, 0.1);
+      border-right: 1px solid var(--border2);
+      font-size: 0.85em;
+    }
+    .input-with-prefix input {
+      border: none !important;
+      background: transparent !important;
+      flex: 1;
+      padding: 7px 10px;
+      color: var(--text);
+      font-size: 0.82em;
+      outline: none;
+    }
+    .token-input-row {
+      display: flex;
+      gap: 8px;
+    }
+    .token-input-row input {
+      flex: 1;
+    }
+    .token-helper-btn {
+      font-size: 0.72em;
+      color: #a78bfa;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .token-helper-btn:hover {
+      text-decoration: underline;
+      color: #c4b5fd;
+    }
+    .toggle-control {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .toggle-control input {
+      display: none;
+    }
+    .toggle-slider {
+      width: 34px;
+      height: 18px;
+      background: var(--surface3);
+      border: 1px solid var(--border2);
+      border-radius: 18px;
+      position: relative;
+      transition: background 0.25s, border-color 0.25s;
+    }
+    .toggle-slider::after {
+      content: '';
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #fff;
+      top: 2px;
+      left: 2px;
+      transition: transform 0.25s;
+    }
+    .toggle-control input:checked + .toggle-slider {
+      background: #9146ff;
+      border-color: #a78bfa;
+    }
+    .toggle-control input:checked + .toggle-slider::after {
+      transform: translateX(16px);
+    }
+    .toggle-label {
+      font-size: 0.82em;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .twitch-card-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 4px;
+    }
+    .twitch-chat-simulator {
+      background: #0e0e10;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      font-size: 0.8em;
+      line-height: 1.5;
+    }
+    .chat-msg {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      word-break: break-all;
+    }
+    .chat-badge {
+      display: inline-block;
+      padding: 1px 5px;
+      border-radius: 3px;
+      font-size: 0.72em;
+      font-weight: 800;
+      background: #3a3a44;
+      color: #efeff1;
+    }
+    .chat-badge.bot {
+      background: #9146ff;
+      color: #ffffff;
+    }
+    .chat-username {
+      font-weight: 700;
+      color: #00ff7f;
+    }
+    .chat-username.bot {
+      color: #ff69b4;
+    }
+    .chat-text {
+      color: #dedee3;
+    }
+    .twitch-stats-block {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .stat-item {
+      background: var(--surface3);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px 12px;
+      text-align: center;
+    }
+    .stat-val {
+      font-size: 1.25em;
+      font-weight: 800;
+      color: var(--text);
+    }
+    .stat-lbl {
+      font-size: 0.68em;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+    .twitch-guide-box {
+      background: rgba(145, 70, 255, 0.06);
+      border: 1px solid rgba(145, 70, 255, 0.2);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 0.72em;
+      color: #c4b5fd;
+      line-height: 1.6;
+    }
+    .twitch-guide-box ol {
+      margin-left: 18px;
+      margin-top: 4px;
+    }
+    .twitch-guide-box code {
+      background: rgba(0, 0, 0, 0.3);
+      padding: 1px 4px;
+      border-radius: 3px;
+      color: #f3e8ff;
+    }
+    .twitch-sidebar-status-box {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      font-size: 0.76em;
+      transition: all 0.2s;
+    }
+    .twitch-sidebar-status-box:hover {
+      border-color: #9146ff;
+      background: rgba(145, 70, 255, 0.08);
+    }
+    .twitch-side-left {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text);
+    }
+    .twitch-side-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--muted2);
+      transition: all 0.3s;
+    }
+    .twitch-side-dot.connected {
+      background: var(--green);
+      box-shadow: 0 0 6px var(--green);
+    }
+    .twitch-side-dot.connecting {
+      background: var(--yellow);
+      box-shadow: 0 0 6px var(--yellow);
+    }
+    .twitch-side-arrow {
+      color: #9146ff;
+      font-weight: 700;
+    }
+
+    /* ── toast ── */
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(8px);
+      background: #1a1e30;
+      border: 1px solid var(--border2);
+      color: #fff;
+      border-radius: 8px;
+      padding: 7px 16px;
+      font-size: 0.8em;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s, transform 0.2s;
+      z-index: 999;
+      white-space: nowrap;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+
+  <!-- ══ 頂部導覽列 ══ -->
+  <header>
+    <div class="header-left">
+      <h1>中控台</h1>
+      <div class="brand-badge-group">
+        <span class="badge-prime">Prime</span>
+        <span class="badge-plus">+</span>
+        <span class="badge-insider"><span class="badge-insider-dot"></span>Insider</span>
+      </div>
+    </div>
+
+    <div class="header-status">
+      <div class="status-chip" id="chip-server">
+        <div class="chip-dot"></div>
+        <span id="chip-server-text">伺服器連線中</span>
+      </div>
+      <div class="status-chip" id="chip-data">
+        <div class="chip-dot"></div>
+        <span id="chip-data-text">等待播放數據</span>
+      </div>
+      <div class="status-chip" id="chip-twitch" onclick="switchEditorTab('twitch')" style="cursor:pointer;" title="點擊切換至 Twitch 機器人設定">
+        <div class="chip-dot"></div>
+        <span id="chip-twitch-text">Twitch: 未連線</span>
+      </div>
+      <a href="https://ruwayhsu.com/ruwayhsu" target="_blank" rel="noopener noreferrer" class="nav-link-btn">看我看我!!</a>
+    </div>
+  </header>
+
+  <!-- ══ 主體 ══ -->
+  <div class="app-body">
+
+    <!-- ── 左側欄 ── -->
+    <aside class="sidebar">
+
+      <!-- 系統狀態 -->
+      <div class="sidebar-section">
+        <div class="sidebar-label">系統狀態</div>
+        <div class="check-row">
+          <div class="check-dot-side" id="dot-server"></div>
+          <div class="check-row-info">
+            <div class="check-row-name">本機伺服器</div>
+            <div class="check-row-desc" id="desc-server">正在連線...</div>
+          </div>
+        </div>
+        <div class="check-row">
+          <div class="check-dot-side" id="dot-data"></div>
+          <div class="check-row-info">
+            <div class="check-row-name">媒體串流數據</div>
+            <div class="check-row-desc" id="desc-data">檢查中...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 現正播放 -->
+      <div class="sidebar-section" id="section-np" style="display:none;">
+        <div class="sidebar-label">現正播放</div>
+        <div class="now-playing-card visible">
+          <div class="np-thumb-row">
+            <img id="np-thumb" src="" alt="縮圖" onerror="if(this.src.includes('maxresdefault.jpg'))this.src=this.src.replace('maxresdefault.jpg','mqdefault.jpg');else if(this.src.includes('-t500x500.'))this.src=this.src.replace('-t500x500.','-large.')">
+            <div class="np-meta">
+              <div id="np-title">—</div>
+              <div class="np-sub">
+                <span class="np-badge" id="np-badge">—</span>
+                <span class="np-time" id="np-time">—</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 設定警示 -->
+      <div class="sidebar-section" id="section-alert" style="display:none;">
+        <div class="sidebar-label">設定提示</div>
+        <div class="alert-mini warning visible" id="alert-mini-warn">
+          <div class="alert-mini-title">尚未收到媒體串流數據</div>
+          <ol>
+            <li>在 Chrome 載入 <code>import</code> 擴充功能</li>
+            <li>開啟 YouTube、Spotify、SoundCloud 或 Twitch 分頁</li>
+            <li>點擊擴充功能圖示並「開始投影」</li>
+          </ol>
+        </div>
+        <div class="alert-mini error visible" id="alert-mini-err" style="display:none!important;">
+          <div class="alert-mini-title">伺服器未連線</div>
+          執行 <code>MusicOverlay.exe</code> 啟動伺服器
+        </div>
+      </div>
+
+      <!-- 主題預設集 -->
+      <div class="sidebar-section">
+        <div class="sidebar-label">主題預設</div>
+        <div class="preset-list">
+          <button class="preset-btn-side active" id="btn-preset-default" onclick="loadPreset('default')">
+            <span>預設底色</span>
+            <span class="preset-dot" style="background:linear-gradient(135deg,#ff3535,#ff7a35)"></span>
+          </button>
+          <button class="preset-btn-side" id="btn-preset-cyberpunk" onclick="loadPreset('cyberpunk')">
+            <span>賽博龐克</span>
+            <span class="preset-dot" style="background:linear-gradient(135deg,#00f0ff,#ff007f)"></span>
+          </button>
+          <button class="preset-btn-side" id="btn-preset-sakura" onclick="loadPreset('sakura')">
+            <span>日系粉櫻</span>
+            <span class="preset-dot" style="background:linear-gradient(135deg,#ff9a9e,#fecfef)"></span>
+          </button>
+          <button class="preset-btn-side" id="btn-preset-terminal" onclick="loadPreset('terminal')">
+            <span>復古終端</span>
+            <span class="preset-dot" style="background:linear-gradient(135deg,#00ff66,#00cc44)"></span>
+          </button>
+          <button class="preset-btn-side" id="btn-preset-nordic" onclick="loadPreset('nordic')">
+            <span>北歐極簡</span>
+            <span class="preset-dot" style="background:linear-gradient(135deg,#00b4d8,#0077b6)"></span>
+          </button>
+        </div>
+      </div>
+
+      <!-- OBS 連結 -->
+      <div class="sidebar-section">
+        <div class="sidebar-label">OBS 來源網址</div>
+        <div style="font-size:0.72em;color:var(--muted);line-height:1.6;margin-bottom:8px;">
+          複製網址貼入 OBS 瀏覽器來源，CSS 貼入「自訂 CSS」欄位即生效
+        </div>
+        <div style="display:flex;flex-direction:column;gap:5px;">
+          <button class="btn btn-ghost" style="width:100%;justify-content:center;" onclick="copyUrl('player2')">複製橫向 OBS 網址</button>
+          <button class="btn btn-ghost" style="width:100%;justify-content:center;" onclick="copyUrl('player1')">複製直向 OBS 網址</button>
+        </div>
+      </div>
+
+      <!-- Twitch 機器人快捷狀態 (Prime Plus) -->
+      <div class="sidebar-section">
+        <div class="sidebar-label">TWITCH 機器人 (&gt;np)</div>
+        <div class="twitch-sidebar-status-box" onclick="switchEditorTab('twitch')">
+          <div class="twitch-side-left">
+            <span class="twitch-side-dot" id="side-twitch-dot"></span>
+            <span id="side-twitch-label">未連線</span>
+          </div>
+          <span class="twitch-side-arrow">設定 →</span>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- ── 主內容區 ── -->
+    <div class="main-content">
+
+      <!-- 預覽工具列 -->
+      <div class="preview-toolbar">
+        <div class="tab-switcher">
+          <button class="tab-btn active" id="tab-p2" onclick="switchPreview('player2')">橫向 650 × 125</button>
+          <button class="tab-btn" id="tab-p1" onclick="switchPreview('player1')">直向 380 × 510</button>
+        </div>
+        <div class="toolbar-sep"></div>
+        <a class="btn btn-ghost" id="btn-open-live" href="/overlay?view=player2" target="_blank">獨立開啟預覽</a>
+      </div>
+
+      <!-- 即時預覽舞台 -->
+      <div class="preview-stage">
+        <div class="iframe-wrapper" id="iframe-wrapper" style="width:650px;height:125px;">
+          <iframe id="preview-frame" src="/overlay?view=player2" width="650" height="125"></iframe>
+        </div>
+      </div>
+
+      <!-- 底部編輯器面板 -->
+      <div class="editor-panel">
+
+        <!-- Tab 列 -->
+        <div class="editor-tabs">
+          <button class="editor-tab active" id="etab-palette" onclick="switchEditorTab('palette')">視覺化調色盤</button>
+          <button class="editor-tab" id="etab-css" onclick="switchEditorTab('css')">CSS 編輯器</button>
+          <button class="editor-tab" id="etab-twitch" onclick="switchEditorTab('twitch')">Twitch 機器人 (&gt;np)</button>
+          <div class="editor-tab-spacer"></div>
+          <div class="editor-tab-actions" id="actions-css">
+            <button class="btn btn-ghost" onclick="resetDefaultCSS()">重設預設</button>
+            <button class="btn btn-copy" onclick="copyCustomCSS()">複製 CSS 到 OBS</button>
+          </div>
+          <div class="editor-tab-actions" id="actions-twitch" style="display:none;">
+            <button class="btn btn-ghost" onclick="testTwitchBot()">發送測試訊息</button>
+            <button class="btn btn-copy" onclick="saveTwitchConfig()">儲存設定並連線</button>
+          </div>
+        </div>
+
+        <!-- 調色盤面板 -->
+        <div class="tab-panel active" id="panel-palette">
+          <div class="color-grid">
+
+            <!-- 卡片外觀 -->
+            <div class="color-card">
+              <div class="color-card-title">卡片外觀</div>
+              <div class="control-row">
+                <label for="cfg-bg-hex">背景底色</label>
+                <div class="picker-wrap">
+                  <input type="color" id="cfg-bg-hex" value="#0e1018">
+                  <input type="range" id="cfg-bg-alpha" min="0" max="1" step="0.01" value="0.88">
+                  <span class="val-badge" id="val-bg-alpha">88%</span>
+                </div>
+              </div>
+              <div class="control-row">
+                <label for="cfg-border-hex">邊框色彩</label>
+                <div class="picker-wrap">
+                  <input type="color" id="cfg-border-hex" value="#ffffff">
+                  <input type="range" id="cfg-border-alpha" min="0" max="1" step="0.01" value="0.08">
+                  <span class="val-badge" id="val-border-alpha">8%</span>
+                </div>
+              </div>
+              <div class="control-row">
+                <label for="cfg-blur">毛玻璃模糊</label>
+                <div class="picker-wrap">
+                  <input type="range" id="cfg-blur" min="0" max="40" step="1" value="18">
+                  <span class="val-badge" id="val-blur">18px</span>
+                </div>
+              </div>
+              <div class="control-row">
+                <label for="cfg-radius">圓角大小</label>
+                <div class="picker-wrap">
+                  <input type="range" id="cfg-radius" min="0" max="32" step="1" value="18">
+                  <span class="val-badge" id="val-radius">18px</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 文字色彩 -->
+            <div class="color-card">
+              <div class="color-card-title">文字顏色</div>
+              <div class="control-row">
+                <label for="cfg-text-color">歌曲標題</label>
+                <div class="picker-wrap">
+                  <input type="color" id="cfg-text-color" value="#ffffff">
+                  <span class="color-code" id="code-text-color">#ffffff</span>
+                </div>
+              </div>
+              <div class="control-row">
+                <label for="cfg-text-muted">時間 / 次要</label>
+                <div class="picker-wrap">
+                  <input type="color" id="cfg-text-muted" value="#a6adc8">
+                  <span class="color-code" id="code-text-muted">#a6adc8</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 進度條 -->
+            <div class="color-card">
+              <div class="color-card-title">進度條色彩</div>
+              <div class="control-row">
+                <label for="cfg-prog-start">漸層起點</label>
+                <div class="picker-wrap">
+                  <input type="color" id="cfg-prog-start" value="#ff3535">
+                  <span class="color-code" id="code-prog-start">#ff3535</span>
+                </div>
+              </div>
+              <div class="control-row">
+                <label for="cfg-prog-end">漸層終點</label>
+                <div class="picker-wrap">
+                  <input type="color" id="cfg-prog-end" value="#ff7a35">
+                  <span class="color-code" id="code-prog-end">#ff7a35</span>
+                </div>
+              </div>
+              <div class="control-row">
+                <label for="cfg-track-hex">底軌顏色</label>
+                <div class="picker-wrap">
+                  <input type="color" id="cfg-track-hex" value="#ffffff">
+                  <input type="range" id="cfg-track-alpha" min="0" max="0.5" step="0.01" value="0.15">
+                  <span class="val-badge" id="val-track-alpha">15%</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 頻譜 -->
+            <div class="color-card">
+              <div class="color-card-title">頻譜動畫 (5條)</div>
+              <div class="control-row">
+                <label for="cfg-spec-bottom">底端色</label>
+                <div class="picker-wrap">
+                  <input type="color" id="cfg-spec-bottom" value="#ff3535">
+                  <span class="color-code" id="code-spec-bottom">#ff3535</span>
+                </div>
+              </div>
+              <div class="control-row">
+                <label for="cfg-spec-top">頂端色</label>
+                <div class="picker-wrap">
+                  <input type="color" id="cfg-spec-top" value="#ffcc00">
+                  <span class="color-code" id="code-spec-top">#ffcc00</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- CSS 編輯器面板 -->
+        <div class="tab-panel" id="panel-css">
+          <div class="editor-body">
+            <textarea id="css-code-input" spellcheck="false" placeholder=":root { /* 在此輸入自訂 CSS... */ }"></textarea>
+          </div>
+        </div>
+
+        <!-- Twitch 聊天室機器人面板 (Prime Plus 專屬) -->
+        <div class="tab-panel" id="panel-twitch">
+          <div class="twitch-bot-container">
+
+            <!-- 左側設定區 -->
+            <div class="twitch-config-col">
+              <div class="twitch-card">
+                <div class="twitch-card-header">
+                  <div class="twitch-card-title">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="#9146ff"><path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714Z"/></svg>
+                    <span>Twitch 帳號綁定與機器人設定</span>
+                  </div>
+                  <div class="twitch-status-pill" id="twitch-pill">
+                    <span class="twitch-pill-dot" id="twitch-pill-dot"></span>
+                    <span id="twitch-pill-text">未連線</span>
+                  </div>
+                </div>
+
+                <div class="twitch-form-grid">
+                  <!-- 啟用開關 -->
+                  <div class="form-item-full">
+                    <label class="toggle-control">
+                      <input type="checkbox" id="cfg-twitch-enabled" onchange="onTwitchToggleChange()">
+                      <span class="toggle-slider"></span>
+                      <span class="toggle-label">啟用 Twitch 聊天室 <code>&gt;np</code> 指令回應</span>
+                    </label>
+                  </div>
+
+                  <!-- 實況頻道名稱 -->
+                  <div class="form-item">
+                    <label>實況頻道名稱 (Channel)</label>
+                    <div class="input-with-prefix">
+                      <span class="input-prefix">#</span>
+                      <input type="text" id="cfg-twitch-channel" placeholder="例如: shroud 或您的 Twitch 帳號">
+                    </div>
+                    <div class="field-hint">機器人將進駐並監聽此頻道的聊天室。</div>
+                  </div>
+
+                  <!-- 發言帳號 -->
+                  <div class="form-item">
+                    <label>發言帳號 (Bot Username)</label>
+                    <input type="text" id="cfg-twitch-bot" placeholder="選填，留空則以實況主本人帳號發言">
+                    <div class="field-hint">可輸入專屬小帳（如 xxx_bot），留空預設為本尊。</div>
+                  </div>
+
+                  <!-- OAuth Token -->
+                  <div class="form-item-full">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                      <label>Twitch OAuth Token</label>
+                      <a href="https://twitchtokengenerator.com/?scope=chat:read+chat:edit" target="_blank" rel="noopener" class="token-helper-btn">
+                        點此快速取得 Token (免申請 App) ↗
+                      </a>
+                    </div>
+                    <div class="token-input-row">
+                      <input type="password" id="cfg-twitch-token" placeholder="oauth:xxxxxxxxxxxxxxxxxxxxxx">
+                      <button type="button" class="btn btn-ghost" id="btn-toggle-token" onclick="toggleTokenVisibility()">顯示</button>
+                    </div>
+                    <div class="field-hint">
+                      安全保證：Token 僅保存在本機伺服器中，僅具備聊天室發送權限（<code>chat:read chat:edit</code>），絕不上傳外部伺服器。
+                    </div>
+                  </div>
+
+                  <!-- 觸發指令名稱 -->
+                  <div class="form-item">
+                    <label>自訂觸發指令</label>
+                    <input type="text" id="cfg-twitch-cmd" value="&gt;np" placeholder="&gt;np">
+                    <div class="field-hint">預設同時相容 <code>&gt;np</code>、<code>!np</code> 與 <code>&gt;nowplaying</code>。</div>
+                  </div>
+
+                  <!-- 冷卻時間 -->
+                  <div class="form-item">
+                    <label>指令冷卻時間 (秒)</label>
+                    <input type="number" id="cfg-twitch-cd" value="5" min="2" max="60">
+                    <div class="field-hint">避免聊天室觀眾密集洗版，建議 3~10 秒。</div>
+                  </div>
+                </div>
+
+                <div class="twitch-card-actions">
+                  <button class="btn btn-copy" onclick="saveTwitchConfig()">儲存設定並連線</button>
+                  <button class="btn btn-ghost" onclick="testTwitchBot()">在聊天室發送測試訊息</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- 右側模擬器與統計區 -->
+            <div class="twitch-preview-col">
+              <div class="twitch-card">
+                <div class="twitch-card-title">聊天室回覆即時預覽</div>
+
+                <div class="twitch-chat-simulator">
+                  <div class="chat-msg">
+                    <span class="chat-badge">觀眾</span>
+                    <span class="chat-username">Viewer123:</span>
+                    <span class="chat-text">&gt;np</span>
+                  </div>
+                  <div class="chat-msg">
+                    <span class="chat-badge bot">BOT</span>
+                    <span class="chat-username bot" id="sim-bot-name">MusicBot:</span>
+                    <span class="chat-text" id="sim-bot-reply">[Spotify] 載入播放資訊中...</span>
+                  </div>
+                </div>
+
+                <div class="twitch-stats-block">
+                  <div class="stat-item">
+                    <div class="stat-val" id="stat-cmd-count">0</div>
+                    <div class="stat-lbl">已回覆指令次數</div>
+                  </div>
+                  <div class="stat-item">
+                    <div class="stat-val" id="stat-channel-name">—</div>
+                    <div class="stat-lbl">目前進駐頻道</div>
+                  </div>
+                </div>
+
+                <div class="twitch-guide-box">
+                  <div style="font-weight:700;margin-bottom:4px;">新手教學指引：</div>
+                  <ol>
+                    <li>點擊左側<strong>「點此快速取得 Token」</strong>，登入您要用來發言的 Twitch 帳號授權。</li>
+                    <li>複製產生的 Token 貼入左側欄位，填寫實況頻道名稱並勾選<strong>「啟用」</strong>。</li>
+                    <li>點擊<strong>「儲存設定並連線」</strong>，右上狀態顯示為綠燈即表示機器人已在聊天室就緒！</li>
+                    <li>觀眾在聊天室輸入 <code>&gt;np</code> 或 <code>!np</code>，即可即時收到目前歌曲與連結。</li>
+                  </ol>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div><!-- /editor-panel -->
+
+    </div><!-- /main-content -->
+  </div><!-- /app-body -->
+
+  <div class="toast" id="toast"></div>
+
+  <script src="/i18n.js"></script>
+  <script>
+    'use strict';
+
+    let currentView = 'player2';
+    const BASE = location.origin;
+    const overlayPath = view => `/overlay?view=${view}&lang=${encodeURIComponent(window.MusicI18n.language)}`;
+
+    // ── 主題 CSS 字典 ──
+    const THEME_PRESETS = {
+      default: `/* 預設玻璃透明底色 */
+:root {
+  --card-bg: rgba(14, 16, 24, 0.88);
+  --card-blur: 18px;
+  --card-border: 1px solid rgba(255, 255, 255, 0.08);
+  --text-color: #ffffff;
+  --text-muted: rgba(255, 255, 255, 0.65);
+  --accent-gradient: linear-gradient(to right, #ff3535, #ff7a35);
+  --spectrum-gradient: linear-gradient(to top, #ff3535 0%, #ff8c00 50%, #ffcc00 100%);
+}`,
+
+      cyberpunk: `/* Cyberpunk Neon (賽博龐克霓虹) */
+:root {
+  --card-bg: rgba(10, 10, 20, 0.92);
+  --card-blur: 20px;
+  --card-border: 1px solid rgba(0, 240, 255, 0.45);
+  --card-shadow: 0 0 25px rgba(0, 240, 255, 0.25), 0 10px 30px rgba(0,0,0,0.7);
+  --text-color: #00f0ff;
+  --text-muted: rgba(255, 0, 128, 0.85);
+  --track-bg: rgba(0, 240, 255, 0.15);
+  --accent-gradient: linear-gradient(to right, #00f0ff, #ff007f);
+  --spectrum-gradient: linear-gradient(to top, #ff007f 0%, #7000ff 50%, #00f0ff 100%);
+}
+.p1-thumb-card, .p2-thumb-card {
+  border: 1px solid rgba(255, 0, 128, 0.5) !important;
+  box-shadow: 0 0 20px rgba(255, 0, 128, 0.35) !important;
+}
+.marquee-inner {
+  text-shadow: 0 0 10px rgba(0, 240, 255, 0.8) !important;
+}
+.spectrum i {
+  box-shadow: 0 0 8px #00f0ff;
+}`,
+
+      sakura: `/* Sakura Blossom (日系粉櫻磨砂) */
+:root {
+  --card-bg: rgba(36, 24, 30, 0.82);
+  --card-blur: 24px;
+  --card-border: 1px solid rgba(255, 183, 197, 0.3);
+  --card-shadow: 0 8px 30px rgba(255, 150, 175, 0.18);
+  --text-color: #fff0f5;
+  --text-muted: rgba(255, 192, 203, 0.75);
+  --track-bg: rgba(255, 255, 255, 0.12);
+  --accent-gradient: linear-gradient(to right, #ff9a9e, #fecfef);
+  --spectrum-gradient: linear-gradient(to top, #ff758c 0%, #ff7eb3 100%);
+}
+.p1-thumb-card, .p2-thumb-card {
+  border: 1px solid rgba(255, 183, 197, 0.35) !important;
+}
+.spectrum i {
+  border-radius: 4px !important;
+}`,
+
+      terminal: `/* Retro Hacker Terminal (復古終端綠) */
+:root {
+  --font-family: 'Consolas', 'Courier New', monospace;
+  --card-bg: rgba(5, 12, 8, 0.95);
+  --card-blur: 8px;
+  --card-border: 1px solid #00ff66;
+  --card-shadow: 0 0 20px rgba(0, 255, 102, 0.25);
+  --text-color: #00ff66;
+  --text-muted: rgba(0, 255, 102, 0.65);
+  --track-bg: rgba(0, 255, 102, 0.2);
+  --accent-gradient: linear-gradient(to right, #00ff66, #00cc44);
+  --spectrum-gradient: linear-gradient(to top, #008833 0%, #00ff66 100%);
+  --p1-thumb-radius: 6px;
+  --p1-info-radius: 6px;
+  --p2-thumb-radius: 6px;
+  --p2-info-radius: 6px;
+}
+.p1-thumb-card, .p2-thumb-card {
+  border: 1px solid #00ff66 !important;
+}
+.marquee-inner {
+  text-shadow: 0 0 8px rgba(0, 255, 102, 0.6);
+}`,
+
+      nordic: `/* Nordic Minimalist Light (北歐極簡淺白) */
+:root {
+  --card-bg: rgba(255, 255, 255, 0.94);
+  --card-blur: 20px;
+  --card-border: 1px solid rgba(0, 0, 0, 0.08);
+  --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+  --text-color: #1a202c;
+  --text-muted: #4a5568;
+  --track-bg: rgba(0, 0, 0, 0.08);
+  --accent-gradient: linear-gradient(to right, #00b4d8, #0077b6);
+  --spectrum-gradient: linear-gradient(to top, #0077b6 0%, #48cae4 100%);
+}
+.p1-thumb-card, .p2-thumb-card {
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1) !important;
+}
+.marquee-inner {
+  text-shadow: none !important;
+}
+.p1-time, .p2-time {
+  color: #4a5568 !important;
+}`
+    };
+
+    // ── 主題調色盤預設值 ──
+    const THEME_CONFIGS = {
+      default:   { bgHex:'#0e1018', bgAlpha:0.88, borderHex:'#ffffff', borderAlpha:0.08, blur:18, radius:18, textColor:'#ffffff', textMuted:'#a6adc8', trackBgHex:'#ffffff', trackBgAlpha:0.15, progStart:'#ff3535', progEnd:'#ff7a35', specBottom:'#ff3535', specTop:'#ffcc00' },
+      cyberpunk: { bgHex:'#0a0a14', bgAlpha:0.92, borderHex:'#00f0ff', borderAlpha:0.45, blur:20, radius:18, textColor:'#00f0ff', textMuted:'#ff007f', trackBgHex:'#00f0ff', trackBgAlpha:0.18, progStart:'#00f0ff', progEnd:'#ff007f', specBottom:'#ff007f', specTop:'#00f0ff' },
+      sakura:    { bgHex:'#24181e', bgAlpha:0.82, borderHex:'#ffb7c5', borderAlpha:0.35, blur:24, radius:20, textColor:'#fff0f5', textMuted:'#f8bbd0', trackBgHex:'#ffffff', trackBgAlpha:0.15, progStart:'#ff9a9e', progEnd:'#fecfef', specBottom:'#ff758c', specTop:'#ff7eb3' },
+      terminal:  { bgHex:'#050c08', bgAlpha:0.95, borderHex:'#00ff66', borderAlpha:0.75, blur:8,  radius:6,  textColor:'#00ff66', textMuted:'#00bb44', trackBgHex:'#00ff66', trackBgAlpha:0.20, progStart:'#00ff66', progEnd:'#00cc44', specBottom:'#008833', specTop:'#00ff66' },
+      nordic:    { bgHex:'#ffffff', bgAlpha:0.94, borderHex:'#000000', borderAlpha:0.08, blur:20, radius:18, textColor:'#1a202c', textMuted:'#4a5568', trackBgHex:'#000000', trackBgAlpha:0.08, progStart:'#00b4d8', progEnd:'#0077b6', specBottom:'#0077b6', specTop:'#48cae4' }
+    };
+
+    // ── 工具函式 ──
+    function hexToRgba(hex, alpha) {
+      let c = (hex || '#000000').replace('#', '');
+      if (c.length === 3) c = c.split('').map(x => x + x).join('');
+      const num = parseInt(c, 16);
+      const r = (num >> 16) & 255;
+      const g = (num >> 8) & 255;
+      const b = num & 255;
+      return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    }
+
+    function buildCSSFromControls() {
+      const bgHex       = document.getElementById('cfg-bg-hex').value;
+      const bgAlpha     = parseFloat(document.getElementById('cfg-bg-alpha').value);
+      const borderHex   = document.getElementById('cfg-border-hex').value;
+      const borderAlpha = parseFloat(document.getElementById('cfg-border-alpha').value);
+      const blur        = document.getElementById('cfg-blur').value;
+      const radius      = document.getElementById('cfg-radius').value;
+      const textColor   = document.getElementById('cfg-text-color').value;
+      const textMuted   = document.getElementById('cfg-text-muted').value;
+      const trackHex    = document.getElementById('cfg-track-hex').value;
+      const trackAlpha  = parseFloat(document.getElementById('cfg-track-alpha').value);
+      const progStart   = document.getElementById('cfg-prog-start').value;
+      const progEnd     = document.getElementById('cfg-prog-end').value;
+      const specBottom  = document.getElementById('cfg-spec-bottom').value;
+      const specTop     = document.getElementById('cfg-spec-top').value;
+
+      const cardBg     = hexToRgba(bgHex, bgAlpha);
+      const cardBorder = borderAlpha > 0 ? `1px solid ${hexToRgba(borderHex, borderAlpha)}` : 'none';
+      const trackBg    = hexToRgba(trackHex, trackAlpha);
+
+      return `/* 使用者自訂調色 */
+:root {
+  --card-bg: ${cardBg};
+  --card-blur: ${blur}px;
+  --card-border: ${cardBorder};
+  --text-color: ${textColor};
+  --text-muted: ${textMuted};
+  --track-bg: ${trackBg};
+  --accent-gradient: linear-gradient(to right, ${progStart}, ${progEnd});
+  --spectrum-gradient: linear-gradient(to top, ${specBottom} 0%, ${specTop} 100%);
+  --p1-thumb-radius: ${radius}px;
+  --p1-info-radius: ${radius}px;
+  --p2-thumb-radius: ${radius}px;
+  --p2-info-radius: ${radius}px;
+}
+.p1-time, .p2-time {
+  color: ${textMuted} !important;
+}`;
+    }
+
+    function syncControlsFromPreset(cfg) {
+      if (!cfg) return;
+      document.getElementById('cfg-bg-hex').value = cfg.bgHex;
+      document.getElementById('cfg-bg-alpha').value = cfg.bgAlpha;
+      document.getElementById('val-bg-alpha').textContent = Math.round(cfg.bgAlpha * 100) + '%';
+
+      document.getElementById('cfg-border-hex').value = cfg.borderHex;
+      document.getElementById('cfg-border-alpha').value = cfg.borderAlpha;
+      document.getElementById('val-border-alpha').textContent = Math.round(cfg.borderAlpha * 100) + '%';
+
+      document.getElementById('cfg-blur').value = cfg.blur;
+      document.getElementById('val-blur').textContent = cfg.blur + 'px';
+
+      document.getElementById('cfg-radius').value = cfg.radius;
+      document.getElementById('val-radius').textContent = cfg.radius + 'px';
+
+      document.getElementById('cfg-text-color').value = cfg.textColor;
+      document.getElementById('code-text-color').textContent = cfg.textColor;
+
+      document.getElementById('cfg-text-muted').value = cfg.textMuted;
+      document.getElementById('code-text-muted').textContent = cfg.textMuted;
+
+      document.getElementById('cfg-prog-start').value = cfg.progStart;
+      document.getElementById('code-prog-start').textContent = cfg.progStart;
+
+      document.getElementById('cfg-prog-end').value = cfg.progEnd;
+      document.getElementById('code-prog-end').textContent = cfg.progEnd;
+
+      document.getElementById('cfg-track-hex').value = cfg.trackBgHex;
+      document.getElementById('cfg-track-alpha').value = cfg.trackBgAlpha;
+      document.getElementById('val-track-alpha').textContent = Math.round(cfg.trackBgAlpha * 100) + '%';
+
+      document.getElementById('cfg-spec-bottom').value = cfg.specBottom;
+      document.getElementById('code-spec-bottom').textContent = cfg.specBottom;
+
+      document.getElementById('cfg-spec-top').value = cfg.specTop;
+      document.getElementById('code-spec-top').textContent = cfg.specTop;
+    }
+
+    function onColorControlChanged() {
+      const bgAlpha = parseFloat(document.getElementById('cfg-bg-alpha').value);
+      document.getElementById('val-bg-alpha').textContent = Math.round(bgAlpha * 100) + '%';
+
+      const borderAlpha = parseFloat(document.getElementById('cfg-border-alpha').value);
+      document.getElementById('val-border-alpha').textContent = Math.round(borderAlpha * 100) + '%';
+
+      document.getElementById('val-blur').textContent = document.getElementById('cfg-blur').value + 'px';
+      document.getElementById('val-radius').textContent = document.getElementById('cfg-radius').value + 'px';
+
+      document.getElementById('code-text-color').textContent = document.getElementById('cfg-text-color').value;
+      document.getElementById('code-text-muted').textContent = document.getElementById('cfg-text-muted').value;
+      document.getElementById('code-prog-start').textContent = document.getElementById('cfg-prog-start').value;
+      document.getElementById('code-prog-end').textContent = document.getElementById('cfg-prog-end').value;
+
+      const trackAlpha = parseFloat(document.getElementById('cfg-track-alpha').value);
+      document.getElementById('val-track-alpha').textContent = Math.round(trackAlpha * 100) + '%';
+
+      document.getElementById('code-spec-bottom').textContent = document.getElementById('cfg-spec-bottom').value;
+      document.getElementById('code-spec-top').textContent = document.getElementById('cfg-spec-top').value;
+
+      const css = buildCSSFromControls();
+      document.getElementById('css-code-input').value = css;
+      applyCSSToIframe();
+
+      document.querySelectorAll('.preset-btn-side').forEach(btn => btn.classList.remove('active'));
+    }
+
+    // ── 切換預覽版型 ──
+    window.addEventListener('music-language-change', () => switchPreview(currentView));
+    function switchPreview(view) {
+      currentView = view;
+      const iframe = document.getElementById('preview-frame');
+      const wrapper = document.getElementById('iframe-wrapper');
+      const btnOpen = document.getElementById('btn-open-live');
+
+      if (view === 'player1') {
+        document.getElementById('tab-p1').classList.add('active');
+        document.getElementById('tab-p2').classList.remove('active');
+        wrapper.style.width = '380px';
+        wrapper.style.height = '510px';
+        iframe.width = '380';
+        iframe.height = '510';
+        iframe.src = overlayPath('player1');
+        btnOpen.href = overlayPath('player1');
+      } else {
+        document.getElementById('tab-p2').classList.add('active');
+        document.getElementById('tab-p1').classList.remove('active');
+        wrapper.style.width = '650px';
+        wrapper.style.height = '125px';
+        iframe.width = '650';
+        iframe.height = '125';
+        iframe.src = overlayPath('player2');
+        btnOpen.href = overlayPath('player2');
+      }
+    }
+
+    // ── 即時注入 CSS 到 iframe ──
+    function applyCSSToIframe() {
+      const css = document.getElementById('css-code-input').value;
+      const iframe = document.getElementById('preview-frame');
+      if (!iframe) return;
+      try {
+        const doc = iframe.contentDocument || iframe.contentWindow.document;
+        if (!doc) return;
+        let styleEl = doc.getElementById('preview-live-css');
+        if (!styleEl) {
+          styleEl = doc.createElement('style');
+          styleEl.id = 'preview-live-css';
+          doc.head.appendChild(styleEl);
+        }
+        styleEl.textContent = css;
+      } catch (e) {}
+    }
+
+    // ── 載入預設主題 ──
+    function loadPreset(key) {
+      const css = THEME_PRESETS[key] || THEME_PRESETS.default;
+      document.getElementById('css-code-input').value = css;
+      applyCSSToIframe();
+
+      if (THEME_CONFIGS[key]) syncControlsFromPreset(THEME_CONFIGS[key]);
+
+      document.querySelectorAll('.preset-btn-side').forEach(btn => btn.classList.remove('active'));
+      const activeBtn = document.getElementById('btn-preset-' + key);
+      if (activeBtn) activeBtn.classList.add('active');
+    }
+
+    function resetDefaultCSS() { loadPreset('default'); }
+
+    // ── 切換底部編輯器 Tab ──
+    let twitchConfigLoaded = false;
+
+    function switchEditorTab(tab) {
+      document.querySelectorAll('.editor-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      const etab = document.getElementById('etab-' + tab);
+      const panel = document.getElementById('panel-' + tab);
+      if (etab) etab.classList.add('active');
+      if (panel) panel.classList.add('active');
+
+      const actionsCss = document.getElementById('actions-css');
+      const actionsTwitch = document.getElementById('actions-twitch');
+      if (actionsCss && actionsTwitch) {
+        if (tab === 'twitch') {
+          actionsCss.style.display = 'none';
+          actionsTwitch.style.display = 'flex';
+          if (!twitchConfigLoaded) loadTwitchConfig();
+        } else {
+          actionsCss.style.display = 'flex';
+          actionsTwitch.style.display = 'none';
+        }
+      }
+    }
+
+    // ── Twitch 機器人管理 ──
+    function updateTwitchStatusDisplay(st) {
+      if (!st) return;
+      const chip = document.getElementById('chip-twitch');
+      const chipText = document.getElementById('chip-twitch-text');
+      const sideDot = document.getElementById('side-twitch-dot');
+      const sideLabel = document.getElementById('side-twitch-label');
+      const statCount = document.getElementById('stat-cmd-count');
+      const statChannel = document.getElementById('stat-channel-name');
+      const simBotName = document.getElementById('sim-bot-name');
+      const pill = document.getElementById('twitch-pill');
+      const pillText = document.getElementById('twitch-pill-text');
+
+      if (statCount) statCount.textContent = st.commandsProcessed || st.repliedCount || 0;
+      if (statChannel) statChannel.textContent = st.channel ? '#' + st.channel : '—';
+      if (simBotName) simBotName.textContent = (st.botUsername || st.channel || 'MusicBot') + ':';
+
+      if (st.connected) {
+        if (chip) chip.className = 'status-chip ok';
+        if (chipText) chipText.textContent = `Twitch: #${st.channel} 已連線`;
+        if (sideDot) sideDot.className = 'twitch-side-dot connected';
+        if (sideLabel) sideLabel.textContent = `已連線: #${st.channel}`;
+        if (pill) pill.className = 'twitch-status-pill connected';
+        if (pillText) pillText.textContent = `已連線 (#${st.channel || '就緒'})`;
+      } else if (st.connecting) {
+        if (chip) chip.className = 'status-chip warn';
+        if (chipText) chipText.textContent = 'Twitch: 連線中...';
+        if (sideDot) sideDot.className = 'twitch-side-dot connecting';
+        if (sideLabel) sideLabel.textContent = '連線中...';
+        if (pill) pill.className = 'twitch-status-pill connecting';
+        if (pillText) pillText.textContent = '連線中...';
+      } else if (st.enabled) {
+        if (chip) chip.className = 'status-chip err';
+        if (chipText) chipText.textContent = 'Twitch: 連線失敗';
+        if (sideDot) sideDot.className = 'twitch-side-dot';
+        if (sideLabel) sideLabel.textContent = '連線失敗';
+        if (pill) pill.className = 'twitch-status-pill';
+        if (pillText) pillText.textContent = '連線失敗';
+      } else {
+        if (chip) chip.className = 'status-chip';
+        if (chipText) chipText.textContent = 'Twitch: 未連線';
+        if (sideDot) sideDot.className = 'twitch-side-dot';
+        if (sideLabel) sideLabel.textContent = '未啟用';
+        if (pill) pill.className = 'twitch-status-pill';
+        if (pillText) pillText.textContent = '未啟用';
+      }
+    }
+
+    function fetchTwitchStatus() {
+      fetch('/api/twitch-bot/status')
+        .then(r => r.json())
+        .then(st => {
+          updateTwitchStatusDisplay(st);
+        })
+        .catch(() => {});
+    }
+
+    function loadTwitchConfig() {
+      fetch('/api/twitch-bot/config')
+        .then(r => r.json())
+        .then(cfg => {
+          if (!cfg) return;
+          const elEnabled = document.getElementById('cfg-twitch-enabled');
+          const elChannel = document.getElementById('cfg-twitch-channel');
+          const elBot = document.getElementById('cfg-twitch-bot');
+          const elToken = document.getElementById('cfg-twitch-token');
+          const elCmd = document.getElementById('cfg-twitch-cmd');
+          const elCd = document.getElementById('cfg-twitch-cd');
+
+          if (elEnabled) elEnabled.checked = Boolean(cfg.enabled);
+          if (elChannel) elChannel.value = cfg.channel || '';
+          if (elBot) elBot.value = cfg.botUsername || '';
+          if (elToken) elToken.value = cfg.oauthToken || '';
+          if (elCmd) elCmd.value = cfg.commandPrefix || '>np';
+          if (elCd) elCd.value = cfg.cooldownSeconds || 5;
+
+          twitchConfigLoaded = true;
+          fetchTwitchStatus();
+        })
+        .catch(() => {});
+    }
+
+    function saveTwitchConfig() {
+      const elEnabled = document.getElementById('cfg-twitch-enabled');
+      const enabled = elEnabled ? elEnabled.checked : false;
+      const channel = (document.getElementById('cfg-twitch-channel').value || '').trim().replace(/^#/, '');
+      const botUsername = (document.getElementById('cfg-twitch-bot').value || '').trim();
+      const oauthToken = (document.getElementById('cfg-twitch-token').value || '').trim();
+      const commandPrefix = (document.getElementById('cfg-twitch-cmd').value || '').trim() || '>np';
+      const cooldownSeconds = parseInt(document.getElementById('cfg-twitch-cd').value, 10) || 5;
+
+      if (enabled && (!channel || !oauthToken)) {
+        showToast('請輸入實況頻道名稱與 Twitch OAuth Token');
+        return;
+      }
+
+      const payload = {
+        enabled,
+        channel,
+        botUsername,
+        oauthToken,
+        commandPrefix,
+        cooldownSeconds
+      };
+
+      fetch('/api/twitch-bot/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+        .then(r => r.json())
+        .then(res => {
+          if (res.ok || res.success) {
+            showToast('Twitch 機器人設定已儲存並重新連線');
+            updateTwitchStatusDisplay(res.status);
+          } else {
+            showToast(res.error || '儲存失敗');
+          }
+        })
+        .catch(e => {
+          showToast('設定儲存錯誤: ' + e.message);
+        });
+    }
+
+    function testTwitchBot() {
+      fetch('/api/twitch-bot/test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      })
+        .then(r => r.json())
+        .then(res => {
+          if (res.ok || res.success) {
+            showToast(res.message || '測試訊息已送出');
+          } else {
+            showToast(res.error || '發送失敗，請檢查連線狀態');
+          }
+        })
+        .catch(e => {
+          showToast('測試發送錯誤: ' + e.message);
+        });
+    }
+
+    function toggleTokenVisibility() {
+      const tokenInp = document.getElementById('cfg-twitch-token');
+      const btn = document.getElementById('btn-toggle-token');
+      if (!tokenInp || !btn) return;
+      if (tokenInp.type === 'password') {
+        tokenInp.type = 'text';
+        btn.textContent = '隱藏';
+      } else {
+        tokenInp.type = 'password';
+        btn.textContent = '顯示';
+      }
+    }
+
+    function onTwitchToggleChange() {
+      const enabled = document.getElementById('cfg-twitch-enabled').checked;
+      const channel = (document.getElementById('cfg-twitch-channel').value || '').trim();
+      const token = (document.getElementById('cfg-twitch-token').value || '').trim();
+
+      if (enabled && (!channel || !token)) {
+        showToast('請先填寫頻道名稱與 Token 後再啟用');
+        document.getElementById('cfg-twitch-enabled').checked = false;
+        return;
+      }
+      saveTwitchConfig();
+    }
+
+    // ── 複製 CSS ──
+    function copyCustomCSS() {
+      const css = document.getElementById('css-code-input').value;
+      navigator.clipboard.writeText(css).then(() => showToast('已複製 CSS，貼入 OBS 自訂 CSS 欄位即生效'));
+    }
+
+    // ── 複製 OBS 網址 ──
+    function copyUrl(view) {
+      const url = BASE + overlayPath(view);
+      navigator.clipboard.writeText(url).then(() => showToast(`已複製 OBS 網址：${url}`));
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2400);
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function getPlatformBadgeHtml(platform) {
+      if (!platform) return '';
+      const p = String(platform).toLowerCase();
+
+      switch (p) {
+        case 'youtube':
+          return `<span class="platform-badge platform-youtube" title="來源：YouTube" aria-label="YouTube">` +
+            `<svg viewBox="0 0 24 24" aria-hidden="true">` +
+              `<path fill="#FF0000" d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814z"/>` +
+              `<polygon fill="#FFFFFF" points="9.545,8.432 15.818,12 9.545,15.568"/>` +
+            `</svg>` +
+          `</span>`;
+
+        case 'ytmusic':
+          return `<span class="platform-badge platform-ytmusic" title="來源：YouTube Music" aria-label="YouTube Music">` +
+            `<svg viewBox="0 0 24 24" aria-hidden="true">` +
+              `<circle cx="12" cy="12" r="11" fill="#FF0000"/>` +
+              `<circle cx="12" cy="12" r="7" fill="none" stroke="#FFFFFF" stroke-width="1.8"/>` +
+              `<polygon fill="#FFFFFF" points="10,8.5 15.5,12 10,15.5"/>` +
+            `</svg>` +
+          `</span>`;
+
+        case 'spotify':
+          return `<span class="platform-badge platform-spotify" title="來源：Spotify" aria-label="Spotify">` +
+            `<svg viewBox="0 0 24 24" aria-hidden="true">` +
+              `<circle cx="12" cy="12" r="11" fill="#000000"/>` +
+              `<path fill="#1ED760" d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/>` +
+            `</svg>` +
+          `</span>`;
+
+        case 'soundcloud':
+          return `<span class="platform-badge platform-soundcloud" title="來源：SoundCloud" aria-label="SoundCloud">` +
+            `<svg viewBox="0 0 24 24" aria-hidden="true">` +
+              `<path fill="#FF5500" d="M1.175 12.225c-.051 0-.094.046-.101.1l-.233 2.154.233 2.105c.007.058.05.098.101.098.05 0 .09-.04.099-.098l.255-2.105-.27-2.154c0-.057-.045-.1-.09-.1m-.899.828c-.06 0-.091.037-.104.094L0 14.479l.165 1.308c0 .055.045.094.09.094s.089-.045.104-.104l.21-1.319-.21-1.334c0-.061-.044-.09-.09-.09m1.83-1.229c-.061 0-.12.045-.12.104l-.21 2.563.225 2.458c0 .06.045.12.119.12.061 0 .105-.061.121-.12l.254-2.474-.254-2.548c-.016-.06-.061-.12-.121-.12m.945-.089c-.075 0-.135.06-.15.135l-.193 2.64.21 2.544c.016.077.075.138.149.138.075 0 .135-.061.15-.15l.24-2.532-.24-2.623c0-.075-.06-.135-.135-.135l-.031-.017zm1.155.36c-.005-.09-.075-.149-.159-.149-.09 0-.158.06-.164.149l-.217 2.43.2 2.563c0 .09.075.157.159.157.074 0 .148-.068.148-.158l.227-2.563-.227-2.444.033.015zm.809-1.709c-.101 0-.18.09-.18.181l-.21 3.957.187 2.563c0 .09.08.164.18.164.094 0 .174-.09.18-.18l.209-2.563-.209-3.972c-.008-.104-.088-.18-.18-.18m.959-.914c-.105 0-.195.09-.203.194l-.18 4.872.165 2.548c0 .12.09.209.195.209.104 0 .194-.089.21-.209l.193-2.548-.192-4.856c-.016-.12-.105-.21-.21-.21m.989-.449c-.121 0-.211.089-.225.209l-.165 5.275.165 2.52c.014.119.104.225.225.225.119 0 .225-.105.225-.225l.195-2.52-.196-5.275c0-.12-.105-.225-.225-.225m1.245.045c0-.135-.105-.24-.24-.24-.119 0-.24.105-.24.24l-.149 5.441.149 2.503c.016.135.121.24.256.24s.24-.105.24-.24l.164-2.503-.164-5.456-.016.015zm.749-.134c-.135 0-.255.119-.255.254l-.15 5.322.15 2.473c0 .15.12.255.255.255s.255-.12.255-.27l.15-2.474-.165-5.307c0-.148-.12-.27-.271-.27m1.005.166c-.164 0-.284.135-.284.285l-.103 5.143.135 2.474c0 .149.119.277.284.277.149 0 .271-.12.284-.285l.121-2.443-.135-5.112c-.012-.164-.135-.285-.285-.285m1.184-.945c-.045-.029-.105-.044-.165-.044s-.119.015-.165.044c-.09.054-.149.15-.149.255v.061l-.104 6.048.115 2.449v.008c.008.06.03.135.074.18.058.061.142.104.234.104.08 0 .158-.044.209-.09.058-.06.091-.135.091-.225l.015-.24.117-2.203-.135-6.086c0-.104-.061-.193-.135-.239l-.002-.022zm1.006-.547c-.045-.045-.09-.061-.15-.061-.074 0-.149.016-.209.061-.075.061-.119.15-.119.24v.029l-.137 6.609.076 1.215.061 1.185c0 .164.148.314.328.314.181 0 .33-.15.33-.329l.15-2.414-.15-6.637c0-.12-.074-.221-.165-.277m8.934 3.777c-.405 0-.795.086-1.139.232-.24-2.654-2.46-4.736-5.188-4.736-.659 0-1.305.135-1.889.359-.225.09-.27.18-.285.359v9.368c.016.18.15.33.33.345h8.185C22.681 17.218 24 15.914 24 14.28s-1.319-2.952-2.938-2.952"/>` +
+            `</svg>` +
+          `</span>`;
+
+        case 'twitch-live':
+          return `<span class="platform-badge platform-twitch-live" title="來源：Twitch (直播)" aria-label="Twitch 直播">` +
+            `<svg viewBox="0 0 24 24" aria-hidden="true">` +
+              `<path fill="#9146FF" d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714Z"/>` +
+            `</svg>` +
+            `<span class="live-dot-pulse"></span>` +
+          `</span>`;
+
+        case 'twitch-vod':
+        case 'twitch':
+          return `<span class="platform-badge platform-twitch-vod" title="來源：Twitch (記錄檔)" aria-label="Twitch 記錄檔">` +
+            `<svg viewBox="0 0 24 24" aria-hidden="true">` +
+              `<path fill="#9146FF" d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714Z"/>` +
+            `</svg>` +
+          `</span>`;
+
+        default:
+          return '';
+      }
+    }
+
+    // ── 系統輪詢 ──
+    function checkSystem() {
+      fetch('/api/status')
+        .then(r => r.json())
+        .then(d => {
+          // 頂部 chips
+          const chipServer = document.getElementById('chip-server');
+          chipServer.className = 'status-chip ok';
+          document.getElementById('chip-server-text').textContent = `伺服器正常（${d.wsConnections} 連線）`;
+
+          // 左側欄 dots
+          document.getElementById('dot-server').className = 'check-dot-side ok';
+          document.getElementById('desc-server').textContent = `正常（${d.wsConnections} 個客戶端）`;
+
+          const media = d.media || d.youtube;
+          const hasData = media && media.title
+            && media.title !== '等待 YouTube 資訊...'
+            && media.title !== '等待 YouTube 播放...'
+            && media.title !== '等待媒體資訊...'
+            && media.title !== '等待媒體播放...'
+            && media.title !== '未找到標題';
+
+          const chipData = document.getElementById('chip-data');
+          const dotData = document.getElementById('dot-data');
+
+          function getPlatformLabel(p) {
+            switch (p) {
+              case 'ytmusic':     return 'YT Music';
+              case 'youtube':     return 'YouTube';
+              case 'spotify':     return 'Spotify';
+              case 'soundcloud':  return 'SoundCloud';
+              case 'twitch-live': return 'Twitch 直播';
+              case 'twitch-vod':  return 'Twitch 記錄檔';
+              default:            return '媒體';
+            }
+          }
+
+          if (hasData) {
+            const pLabel = getPlatformLabel(media.platform);
+            chipData.className = 'status-chip ok';
+            const chipTitle = `[${pLabel}] ${media.title}`;
+            document.getElementById('chip-data-text').textContent = escapeHtml(chipTitle).slice(0, 24) + (chipTitle.length > 24 ? '…' : '');
+
+            dotData.className = 'check-dot-side ok';
+            document.getElementById('desc-data').textContent = `已抓取 ${pLabel} 數據`;
+
+            // 顯示現正播放
+            document.getElementById('section-np').style.display = '';
+            document.getElementById('section-alert').style.display = 'none';
+
+            const isLive = Boolean(media.isLive || media.duration === 'LIVE' || media.platform === 'twitch-live');
+            const isPlaying = media.videoStatus === 'playing';
+            const badge = document.getElementById('np-badge');
+            badge.textContent = isLive ? '直播中' : (isPlaying ? '播放中' : '已暫停');
+            badge.className = 'np-badge ' + (isLive ? 'playing' : (isPlaying ? 'playing' : 'paused'));
+
+            const artist = media.artist || (media.extra && (media.extra.channel || media.extra.streamer)) || '';
+            const fullTitle = (artist && !media.title.toLowerCase().includes(artist.toLowerCase()))
+              ? `${media.title} · ${artist}`
+              : media.title;
+
+            document.getElementById('np-title').innerHTML =
+              `<span class="np-title-text">${escapeHtml(fullTitle)}</span>` +
+              getPlatformBadgeHtml(media.platform);
+            document.getElementById('np-time').textContent = isLive
+              ? (media.currentTime && media.currentTime !== 'LIVE' ? `LIVE ${media.currentTime}` : 'LIVE 直播中')
+              : `${media.currentTime || '0:00'} / ${media.duration || '0:00'}`;
+
+            const npThumb = document.getElementById('np-thumb');
+            if (media.thumbnail) {
+              npThumb.src = media.thumbnail;
+              npThumb.style.display = '';
+            } else {
+              npThumb.style.display = 'none';
+            }
+
+            // 更新 Twitch 模擬器回覆文字
+            const simReply = document.getElementById('sim-bot-reply');
+            if (simReply) {
+              const urlPart = media.url ? ` | ${media.url}` : '';
+              const tagLabel = isLive && pLabel === 'YouTube' ? 'YouTube 直播' : pLabel;
+              simReply.textContent = `[${tagLabel}] ${fullTitle}${urlPart}`;
+            }
+          } else {
+            chipData.className = 'status-chip warn';
+            document.getElementById('chip-data-text').textContent = '等待播放數據';
+
+            dotData.className = 'check-dot-side warn';
+            document.getElementById('desc-data').textContent = '尚未收到數據';
+
+            document.getElementById('section-np').style.display = 'none';
+            document.getElementById('section-alert').style.display = '';
+            document.getElementById('alert-mini-warn').style.display = '';
+            document.getElementById('alert-mini-err').style.removeProperty('display');
+            document.getElementById('alert-mini-err').style.display = 'none';
+          }
+
+          if (d.twitchBot) {
+            updateTwitchStatusDisplay(d.twitchBot);
+          }
+        })
+        .catch(() => {
+          document.getElementById('chip-server').className = 'status-chip err';
+          document.getElementById('chip-server-text').textContent = '伺服器未連線';
+          document.getElementById('chip-data').className = 'status-chip err';
+          document.getElementById('chip-data-text').textContent = '無法取得數據';
+
+          const chipTwitch = document.getElementById('chip-twitch');
+          if (chipTwitch) {
+            chipTwitch.className = 'status-chip err';
+            const txt = document.getElementById('chip-twitch-text');
+            if (txt) txt.textContent = 'Twitch: 伺服器未連線';
+          }
+          const pill = document.getElementById('twitch-pill');
+          if (pill) pill.className = 'twitch-status-pill';
+          const pillText = document.getElementById('twitch-pill-text');
+          if (pillText) pillText.textContent = '伺服器未連線';
+
+          document.getElementById('dot-server').className = 'check-dot-side err';
+          document.getElementById('desc-server').textContent = '伺服器未連線';
+          document.getElementById('dot-data').className = 'check-dot-side err';
+          document.getElementById('desc-data').textContent = '無法獲取數據';
+
+          document.getElementById('section-np').style.display = 'none';
+          document.getElementById('section-alert').style.display = '';
+          document.getElementById('alert-mini-warn').style.display = 'none';
+          document.getElementById('alert-mini-err').style.removeProperty('display');
+        });
+    }
+
+    // ── 初始化 ──
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('css-code-input').value = THEME_PRESETS.default;
+      document.getElementById('css-code-input').addEventListener('input', applyCSSToIframe);
+      document.getElementById('preview-frame').addEventListener('load', () => setTimeout(applyCSSToIframe, 150));
+
+      const colorControlIds = [
+        'cfg-bg-hex', 'cfg-bg-alpha',
+        'cfg-border-hex', 'cfg-border-alpha',
+        'cfg-blur', 'cfg-radius',
+        'cfg-text-color', 'cfg-text-muted',
+        'cfg-prog-start', 'cfg-prog-end',
+        'cfg-track-hex', 'cfg-track-alpha',
+        'cfg-spec-bottom', 'cfg-spec-top'
+      ];
+      colorControlIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.addEventListener('input', onColorControlChanged);
+          el.addEventListener('change', onColorControlChanged);
+        }
+      });
+
+      syncControlsFromPreset(THEME_CONFIGS.default);
+      loadTwitchConfig();
+      checkSystem();
+      setInterval(checkSystem, 2000);
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,58 @@
+{
+  "manifest_version": 3,
+  "default_locale": "zh_TW",
+  "name": "__MSG_extName__",
+  "version": "2.0",
+  "description": "__MSG_extDescription__",
+  "permissions": [
+    "tabs",
+    "activeTab",
+    "scripting",
+    "storage"
+  ],
+  "host_permissions": [
+    "*://*.youtube.com/*",
+    "*://*.spotify.com/*",
+    "*://*.soundcloud.com/*",
+    "*://*.twitch.tv/*",
+    "http://localhost:50120/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://music.youtube.com/*"],
+      "js": ["ytmusic-extractor.js", "content.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["*://*.youtube.com/watch*", "*://*.youtube.com/shorts/*", "*://*.youtube.com/live/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["*://open.spotify.com/*"],
+      "js": ["extractors.js", "content.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["*://*.soundcloud.com/*"],
+      "js": ["extractors.js", "content.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["*://*.twitch.tv/*"],
+      "js": ["twitch-adapter.js", "content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "images/icon16.png",
+      "48": "images/icon48.png",
+      "128": "images/icon128.png"
+    }
+  }
+}

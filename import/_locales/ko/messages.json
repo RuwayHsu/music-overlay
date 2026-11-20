@@ -1,0 +1,8 @@
+{
+  "extName": {
+    "message": "미디어 스트림 정보 추출기 (Prime Plus)"
+  },
+  "extDescription": {
+    "message": "YouTube, YouTube Music, Spotify, SoundCloud, Twitch 재생 정보를 가져옵니다"
+  }
+}

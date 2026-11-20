@@ -1,0 +1,58 @@
+/**
+ * ================================================================
+ * Player 1（直向播放器）CSS 自訂模板
+ * ================================================================
+ * 用法：複製此檔案內容，貼到 OBS 瀏覽器來源的「自訂 CSS」中。
+ * 結構：
+ *   - 上方：獨立圓角正方形縮圖 (.p1-thumb-card)
+ *   - 下方：獨立長方形圓角資訊群組 (.p1-info-card)
+ *     - 跑馬燈標題 (.p1-title-wrap)
+ *     - 目前秒數 (#p1-cur-time) + 進度條 (.p1-progress-track) + 總長度 (#p1-total-time)
+ */
+
+:root {
+  /* ── 核心變數調整（放大強化版）── */
+  --p1-width: 380px;                                 /* 整體寬度 */
+  --p1-thumb-size: 380px;                           /* 縮圖寬高 (正方形) */
+  --p1-thumb-radius: 24px;                          /* 縮圖圓角 */
+  --p1-info-radius: 22px;                           /* 下方資訊圓角 */
+  --p1-gap: 16px;                                   /* 上下間隔 */
+
+  --card-bg: rgba(14, 16, 24, 0.88);                /* 毛玻璃底色 */
+  --card-blur: 18px;                                /* 毛玻璃模糊度 */
+  --card-border: 1px solid rgba(255, 255, 255, 0.08);/* 卡片邊框 */
+  --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);   /* 陰影投影 */
+
+  --text-color: #ffffff;                            /* 標題顏色 */
+  --text-muted: rgba(255, 255, 255, 0.6);           /* 時間顏色 */
+  --track-bg: rgba(255, 255, 255, 0.15);            /* 進度槽底色 */
+  --accent-gradient: linear-gradient(to right, #ff3535, #ff7a35); /* 進度填滿漸層 */
+}
+
+/* ── 縮圖卡片客製化 ── */
+.p1-thumb-card {
+  /* box-shadow: 0 0 20px rgba(255, 53, 53, 0.25); */
+}
+
+/* ── 資訊卡片客製化 ── */
+.p1-info-card {
+  /* padding: 18px 22px; */
+}
+
+/* ── 跑馬燈標題字體與顏色 ── */
+.p1-title-wrap .marquee-inner {
+  font-size: 1.25em;
+  font-weight: 700;
+}
+
+/* ── 目前秒數 + 進度條 + 總長度（分列兩側） ── */
+.p1-bottom {
+  gap: 14px;
+}
+.p1-progress-track {
+  height: 7px;
+}
+.p1-time {
+  font-size: 1.08em;
+  font-weight: 700;
+}

@@ -1,0 +1,8 @@
+{
+  "extName": {
+    "message": "多媒体流信息提取器（Prime Plus 版）"
+  },
+  "extDescription": {
+    "message": "获取 YouTube、YouTube Music、Spotify、SoundCloud、Twitch 直播和录像的播放信息"
+  }
+}

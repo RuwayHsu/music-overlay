@@ -1,0 +1,9 @@
+{
+  "name": "youtube-obs-server",
+  "version": "2.0.0",
+  "description": "YouTube OBS 整合式 Overlay 伺服器",
+  "main": "server.js",
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}

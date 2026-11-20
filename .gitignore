@@ -1,0 +1,17 @@
+# 機密設定與個人憑證
+main/twitch-bot-config.json
+
+# 執行環境與大型二進位檔 (建議改放 GitHub Releases)
+runtime/
+
+# Node.js 相依套件
+main/node_modules/
+
+# 執行日誌與系統暫存
+*.log
+node_err.log
+.DS_Store
+Thumbs.db
+
+# AI 輔助開發設定
+.agents/
