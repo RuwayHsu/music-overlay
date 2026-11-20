@@ -81,3 +81,12 @@ Add a new **Browser Source** in OBS Studio with one of the following configurati
 ## Detailed Documentation
 
 For complete setup instructions, AI CSS customization guides, and troubleshooting, please refer to [HowToUse_EN.md](./HowToUse_EN.md) (English) or [HowToUse.md](./HowToUse.md) (Traditional Chinese).
+
+## Privacy, AI Usage Scope & Disclaimer
+
+1. **Local Execution & Privacy**:
+   All data communication occurs strictly on your local machine (`localhost:50120`). Your playback metadata and Twitch OAuth Token are stored exclusively on your local disk. This project does not operate any remote servers and never collects or transmits personal data, tokens, or playback history.
+2. **Generative AI Scope Disclosure**:
+   References to generative AI in this project apply strictly to code assistance, localization, and providing a documented CSS specification (`custom-themes/SKILL.md`) so users can generate custom OBS CSS stylesheets with their preferred AI tools. This software contains no built-in AI models and uses no AI-generated art, illustrations, or audio assets.
+3. **Non-Affiliation & Fair Use Disclaimer**:
+   This extension only reads publicly displayed metadata (track title, playback timer, and thumbnail URL) from active browser tabs for OBS overlay projection. It does not download, redistribute, or bypass DRM of any media streams. YouTube, YouTube Music, Spotify, SoundCloud, Twitch, and OBS Studio are trademarks of their respective owners. This is an independent tool and is not affiliated with or endorsed by any of the aforementioned companies.
