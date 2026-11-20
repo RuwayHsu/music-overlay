@@ -240,4 +240,4 @@ Prime Plus 的獨家亮點為全自動化 Twitch 聊天室指令互動。觀眾�
 
 ---
 
-*Music Overlay Prime Plus Insider Edition © 2026. All rights reserved.*
+*Music Overlay © 2026. All rights reserved.*
