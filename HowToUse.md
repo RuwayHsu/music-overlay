@@ -1,5 +1,7 @@
 # Music Overlay Prime+ Insider 專業實況音樂播放器 使用說明書
 
+語言 / Language: **繁體中文** | [English](./HowToUse_EN.md)
+
 **版本**：Prime Plus Insider Edition (v2.4)  
 **發行日期**：2026 年  
 **適用作業系統**：Windows 10 / Windows 11 (64-bit)  

@@ -1,5 +1,7 @@
 # Music Overlay Prime Plus
 
+語言 / Language: **繁體中文** | [English](./README_EN.md)
+
 Music Overlay Prime Plus 是一套專為實況主與內容創作者設計的 OBS 即時多媒體資訊投影系統。系統透過瀏覽器擴充功能擷取當前播放的音樂或影音狀態，經由本機 WebSocket 伺服器以極低延遲同步至 OBS Studio 瀏覽器來源，並內建 Twitch 聊天室機器人（支援 `>np` 即時查詢當前曲目）。
 
 ## 核心功能
@@ -7,7 +9,7 @@ Music Overlay Prime Plus 是一套專為實況主與內容創作者設計的 OBS
 - **多平台串流支援**：支援 YouTube、YouTube Music、Spotify Web Player、SoundCloud 與 Twitch（直播與 VOD）。
 - **Twitch 聊天室機器人整合**：透過原生 WebSocket 連線 Twitch IRC，觀眾輸入 `>np` 或 `!np` 即可自動回覆曲名、創作者、播放進度與來源網址。支援實況主本尊帳號或獨立機器人帳號發言。
 - **雙版型投影畫布**：提供橫向膠囊卡片（650 x 125 px）與直向黑膠封面卡片（380 x 510 px）兩種版型。
-- **視覺化調色引擎**：中控台內建多款預設主題，支援自訂背景透明度、高斯模糊（Backdrop Blur）、圓角半徑、進度條漸層與頻譜動畫，並可一鍵匯出 OBS 自訂 CSS。
+- **視覺化調色引擎與 AI 樣式生成**：中控台內建多款預設主題，支援自訂背景透明度、高斯模糊（Backdrop Blur）、圓角半徑、進度條漸層與頻譜動畫；同時於 `custom-themes/` 提供完整 CSS 範本與 AI 設計規範（`SKILL.md`），可搭配生成式 AI 快速產出專屬主題。
 - **系統匣背景常駐**：提供 Windows 系統匣常駐程式（`MusicOverlay.exe`），無命令列黑框干擾，可於背景管理伺服器與快速開啟中控台。
 
 ## 支援平台一覽

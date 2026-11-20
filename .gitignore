@@ -15,3 +15,6 @@ Thumbs.db
 
 # AI 輔助開發設定
 .agents/
+
+# 打包發行壓縮檔 (改上傳至 GitHub Releases)
+*.zip
