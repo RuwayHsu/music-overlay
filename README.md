@@ -1,8 +1,8 @@
-# Music Overlay Prime Plus
+# Music Overlay
 
 語言 / Language: **繁體中文** | [English](./README_EN.md)
 
-Music Overlay Prime Plus 是一套專為實況主與內容創作者設計的 OBS 即時多媒體資訊投影系統。系統透過瀏覽器擴充功能擷取當前播放的音樂或影音狀態，經由本機 WebSocket 伺服器以極低延遲同步至 OBS Studio 瀏覽器來源，並內建 Twitch 聊天室機器人（支援 `>np` 即時查詢當前曲目）。
+Music Overlay 是一套專為實況主與內容創作者設計的 OBS 即時多媒體資訊投影系統。系統透過瀏覽器擴充功能擷取當前播放的音樂或影音狀態，經由本機 WebSocket 伺服器以極低延遲同步至 OBS Studio 瀏覽器來源，並內建 Twitch 聊天室機器人（支援 `>np` 即時查詢當前曲目）。
 
 ## 核心功能
 
@@ -25,7 +25,7 @@ Music Overlay Prime Plus 是一套專為實況主與內容創作者設計的 OBS
 ## 專案目錄結構
 
 ```text
-Music-Overlay-Prime-Plus/
+Music-Overlay/
 ├── MusicOverlay.exe             # Windows 系統匣常駐啟動程式
 ├── import/                      # Chromium 瀏覽器擴充功能 (Manifest V3)
 │   ├── manifest.json            # 擴充功能設定檔

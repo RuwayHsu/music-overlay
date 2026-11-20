@@ -49,7 +49,7 @@ function handleApiRoutes(req, res) {
     return true;
   }
 
-  // ── Twitch 機器人 API 端點 (Prime Plus 專屬) ───────────────────────────
+  // ── Twitch 機器人 API 端點 ──────────────────────────────────────────
   if (urlPath === '/api/twitch-bot/config' && method === 'GET') {
     sendJSON(res, 200, twitchBot.getConfig());
     return true;

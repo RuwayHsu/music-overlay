@@ -11,7 +11,7 @@ namespace MusicOverlayTray
 {
     static class Program
     {
-        private const string MUTEX_NAME = "Global\\MusicOverlay_PrimePlus_SingleInstance_Mutex_2026";
+        private const string MUTEX_NAME = "Global\\MusicOverlay_SingleInstance_Mutex_2026";
         private const int SERVER_PORT = 50120;
         private static Mutex appMutex;
         private static Process nodeProcess;
@@ -49,7 +49,7 @@ namespace MusicOverlayTray
             {
                 MessageBox.Show(
                     Locale.T("未偵測到 Node.js 執行環境！\n\n請確認此目錄下包含 runtime\\node.exe，或於電腦中安裝 Node.js (nodejs.org)。"),
-                    Locale.T("Music Overlay Prime+ — 啟動錯誤"),
+                    Locale.T("Music Overlay — 啟動錯誤"),
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error
                 );
@@ -60,7 +60,7 @@ namespace MusicOverlayTray
             {
                 MessageBox.Show(
                     Locale.T("找不到伺服器核心腳本：\n") + serverScript,
-                    Locale.T("Music Overlay Prime+ — 檔案遺失"),
+                    Locale.T("Music Overlay — 檔案遺失"),
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error
                 );
@@ -211,7 +211,7 @@ namespace MusicOverlayTray
         private static void InitTrayIcon()
         {
             trayIcon = new NotifyIcon();
-            trayIcon.Text = Locale.T("Music Overlay Prime+ 控制中心");
+            trayIcon.Text = Locale.T("Music Overlay 控制中心");
 
             // 嘗試載入圖示（優先從程式自身圖示讀取，次選實體 app.ico）
             try
@@ -260,7 +260,7 @@ namespace MusicOverlayTray
             itemRestart.Click += (s, e) =>
             {
                 StartNodeProcess();
-                trayIcon.ShowBalloonTip(1500, "Music Overlay Prime+", Locale.T("伺服器已重新啟動！"), ToolTipIcon.Info);
+                trayIcon.ShowBalloonTip(1500, "Music Overlay", Locale.T("伺服器已重新啟動！"), ToolTipIcon.Info);
             };
             menu.Items.Add(itemRestart);
 
@@ -298,7 +298,7 @@ namespace MusicOverlayTray
             // 氣泡提示通知
             trayIcon.ShowBalloonTip(
                 2000,
-                Locale.T("Music Overlay Prime+ 已啟動"),
+                Locale.T("Music Overlay 已啟動"),
                 Locale.T("已在背景與系統匣運行 (支援 Twitch >np)。\n點擊開啟中控台，右鍵可隨時關閉。"),
                 ToolTipIcon.Info
             );

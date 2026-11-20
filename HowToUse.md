@@ -1,8 +1,8 @@
-# Music Overlay Prime+ Insider 專業實況音樂播放器 使用說明書
+# Music Overlay 專業實況音樂播放器 使用說明書
 
 語言 / Language: **繁體中文** | [English](./HowToUse_EN.md)
 
-**版本**：Prime Plus Insider Edition (v2.4)  
+**版本**：v2.4  
 **發行日期**：2026 年  
 **適用作業系統**：Windows 10 / Windows 11 (64-bit)  
 
@@ -15,7 +15,7 @@
 - [參、快速開始：三步驟啟動](#參快速開始三步驟啟動)
 - [肆、OBS Studio 場景與瀏覽器來源設定](#肆obs-studio-場景與瀏覽器來源設定)
 - [伍、多媒體串流平台支援與操作說明](#伍多媒體串流平台支援與操作說明)
-- [陸、Prime Plus 核心旗艦：Twitch 機器人與 >np 指令](#陸prime-plus-核心旗艦twitch-機器人與-np-指令)
+- [陸、Twitch 機器人與 >np 指令](#陸twitch-機器人與-np-指令)
   - [6.1 功能概述](#61-功能概述)
   - [6.2 取得 Twitch OAuth Token (快速授權)](#62-取得-twitch-oauth-token-快速授權)
   - [6.3 頻道進駐與機器人帳號設定](#63-頻道進駐與機器人帳號設定)
@@ -31,7 +31,7 @@
 
 Music Overlay 是專為實況主、VTuber 與內容創作者量身打造的即時多媒體投影系統。相較於傳統播放插件，Music Overlay 採用現代化無縫架構，能精準擷取瀏覽器正在播放的音樂或影音資訊，並以極低延遲（WebSocket 即時雙向通訊）投影至 OBS 直播畫面中。
 
-### Prime Plus 尊榮特色
+### 核心功能特色
 
 1. **Twitch 聊天室機器人整合**
    - 觀眾於實況聊天室輸入 `>np` 或 `!np`，機器人即刻以毫秒級速度回覆目前播放的曲名、創作者、時間進度及**點擊直達連結**。
@@ -54,7 +54,7 @@ Music Overlay 是專為實況主、VTuber 與內容創作者量身打造的即�
 解壓縮後的完整資料夾結構如下：
 
 ```
-Music Overlay Prime Plus/
+Music Overlay/
 ├── MusicOverlay.exe             # 主程式：Win32 系統匣常駐守護程式（雙擊啟動）
 ├── 使用說明書.pdf               # 本手冊電子文件
 ├── runtime/                     # 內建免安裝可攜式 Node.js 執行環境
@@ -141,9 +141,9 @@ Music Overlay Prime Plus/
 
 ---
 
-## 陸、Prime Plus 核心旗艦：Twitch 機器人與 >np 指令
+## 陸、Twitch 機器人與 >np 指令
 
-Prime Plus 的獨家亮點為全自動化 Twitch 聊天室指令互動。觀眾在聊天室輸入 `>np`，機器人便會立即讀取目前正在播放的歌曲資訊並回覆，省去實況主手動回覆歌單的困擾。
+Music Overlay 內建全自動化 Twitch 聊天室指令互動。觀眾在聊天室輸入 `>np`，機器人便會立即讀取目前正在播放的歌曲資訊並回覆，省去實況主手動回覆歌單的困擾。
 
 ### 6.1 功能概述
 - **零延遲 IRC 架構**：直接透過 WebSocket 原生連線至 Twitch IRC 伺服器，無需龐大第三方套件或沉重框架。

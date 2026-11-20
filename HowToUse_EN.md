@@ -1,8 +1,8 @@
-# Music Overlay Prime+ Insider User Manual
+# Music Overlay User Manual
 
 Language: [繁體中文](./HowToUse.md) | **English**
 
-**Version**: Prime Plus Insider Edition (v2.4)  
+**Version**: v2.4  
 **Release Year**: 2026  
 **Supported OS**: Windows 10 / Windows 11 (64-bit)  
 
@@ -53,7 +53,7 @@ Music Overlay is a real-time multimedia projection system built for live streame
 ## 2. Directory Structure & System Requirements
 
 ```text
-Music Overlay Prime Plus/
+Music Overlay/
 ├── MusicOverlay.exe             # Main executable: Win32 system tray daemon
 ├── HowToUse.md / HowToUse_EN.md # User manuals (Traditional Chinese / English)
 ├── runtime/                     # Portable Node.js runtime (included in Release zip)

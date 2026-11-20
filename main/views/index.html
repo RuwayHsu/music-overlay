@@ -71,99 +71,6 @@
       letter-spacing: 0.04em;
       color: var(--text);
     }
-    .brand-badge-group {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      user-select: none;
-    }
-    /* 尊貴 Prime 金色掃光徽章 */
-    .badge-prime {
-      position: relative;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      padding: 2.5px 8px;
-      border-radius: 5px;
-      font-size: 0.65em;
-      font-weight: 900;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      background: linear-gradient(135deg, #ffd700 0%, #f59e0b 50%, #d97706 100%);
-      color: #1a0f00;
-      border: 1px solid rgba(255, 235, 120, 0.8);
-      box-shadow: 0 0 12px rgba(245, 158, 11, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.85);
-      overflow: hidden;
-      line-height: 1;
-    }
-    .badge-prime::after {
-      content: '';
-      position: absolute;
-      top: -50%;
-      left: -120%;
-      width: 60%;
-      height: 200%;
-      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.75), transparent);
-      transform: rotate(25deg);
-      animation: primeSheen 3.6s infinite ease-in-out;
-    }
-    @keyframes primeSheen {
-      0%, 60% { left: -120%; }
-      80%, 100% { left: 160%; }
-    }
-    /* 尊貴 Plus 炫彩霓虹標籤 */
-    .badge-plus {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 1.5px 6.5px;
-      border-radius: 4px;
-      font-size: 0.7em;
-      font-weight: 900;
-      background: linear-gradient(135deg, #ff0055 0%, #ff5500 100%);
-      color: #ffffff;
-      border: 1px solid rgba(255, 100, 150, 0.85);
-      box-shadow: 0 0 10px rgba(255, 0, 85, 0.55);
-      line-height: 1;
-      text-shadow: 0 0 4px rgba(255, 255, 255, 0.8);
-      animation: plusPulse 2.4s infinite ease-in-out;
-    }
-    @keyframes plusPulse {
-      0%, 100% { transform: scale(1); box-shadow: 0 0 8px rgba(255, 0, 85, 0.4); }
-      50% { transform: scale(1.1); box-shadow: 0 0 16px rgba(255, 0, 85, 0.8), 0 0 24px rgba(255, 85, 0, 0.5); }
-    }
-    /* 尊貴 Insider 霓虹紫光微呼吸徽章 */
-    .badge-insider {
-      position: relative;
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      padding: 2.5px 8px;
-      border-radius: 5px;
-      font-size: 0.63em;
-      font-weight: 800;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      background: linear-gradient(135deg, rgba(168, 85, 247, 0.22) 0%, rgba(99, 102, 241, 0.3) 100%);
-      color: #e9d5ff;
-      border: 1px solid rgba(192, 132, 252, 0.6);
-      box-shadow: 0 0 10px rgba(168, 85, 247, 0.35);
-      backdrop-filter: blur(4px);
-      line-height: 1;
-    }
-    .badge-insider-dot {
-      width: 5px;
-      height: 5px;
-      border-radius: 50%;
-      background: #c084fc;
-      box-shadow: 0 0 6px #c084fc;
-      animation: insiderPulse 1.8s infinite ease-in-out;
-    }
-    @keyframes insiderPulse {
-      0%, 100% { transform: scale(1); opacity: 0.8; box-shadow: 0 0 4px #c084fc; }
-      50% { transform: scale(1.35); opacity: 1; box-shadow: 0 0 10px #e879f9, 0 0 16px rgba(192, 132, 252, 0.8); }
-    }
-
     /* 頂部狀態指示 */
     .header-status {
       display: flex;
@@ -788,7 +695,7 @@
     }
 
     /* ══════════════════════════════
-       Twitch 機器人控制面板 (Prime Plus)
+       Twitch 機器人控制面板
     ══════════════════════════════ */
     .twitch-bot-container {
       display: grid;
@@ -1142,11 +1049,6 @@
   <header>
     <div class="header-left">
       <h1>中控台</h1>
-      <div class="brand-badge-group">
-        <span class="badge-prime">Prime</span>
-        <span class="badge-plus">+</span>
-        <span class="badge-insider"><span class="badge-insider-dot"></span>Insider</span>
-      </div>
     </div>
 
     <div class="header-status">
@@ -1264,7 +1166,7 @@
         </div>
       </div>
 
-      <!-- Twitch 機器人快捷狀態 (Prime Plus) -->
+      <!-- Twitch 機器人快捷狀態 -->
       <div class="sidebar-section">
         <div class="sidebar-label">TWITCH 機器人 (&gt;np)</div>
         <div class="twitch-sidebar-status-box" onclick="switchEditorTab('twitch')">
@@ -1431,7 +1333,7 @@
           </div>
         </div>
 
-        <!-- Twitch 聊天室機器人面板 (Prime Plus 專屬) -->
+        <!-- Twitch 聊天室機器人面板 -->
         <div class="tab-panel" id="panel-twitch">
           <div class="twitch-bot-container">
 

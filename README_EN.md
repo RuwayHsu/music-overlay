@@ -1,8 +1,8 @@
-# Music Overlay Prime Plus
+# Music Overlay
 
 Language: [繁體中文](./README.md) | **English**
 
-Music Overlay Prime Plus is a real-time multimedia overlay system designed for live streamers, VTubers, and content creators using OBS Studio. It captures active playback metadata directly from your web browser via a Chromium extension and synchronizes it to OBS Browser Sources with ultra-low latency through a local WebSocket server. It also features a built-in Twitch chat bot that responds to `>np` commands in real time.
+Music Overlay is a real-time multimedia overlay system designed for live streamers, VTubers, and content creators using OBS Studio. It captures active playback metadata directly from your web browser via a Chromium extension and synchronizes it to OBS Browser Sources with ultra-low latency through a local WebSocket server. It also features a built-in Twitch chat bot that responds to `>np` commands in real time.
 
 ## Key Features
 
@@ -25,7 +25,7 @@ Music Overlay Prime Plus is a real-time multimedia overlay system designed for l
 ## Project Structure
 
 ```text
-Music-Overlay-Prime-Plus/
+Music-Overlay/
 ├── MusicOverlay.exe             # Windows system tray launcher & daemon
 ├── import/                      # Chromium browser extension (Manifest V3)
 │   ├── manifest.json            # Extension manifest

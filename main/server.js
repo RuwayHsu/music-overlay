@@ -32,7 +32,7 @@ const server = http.createServer((req, res) => {
 // ── WebSocket（附掛到同一個 http.Server，不需額外 Port）────────────────
 wsModule.init(server);
 
-// ── Twitch 聊天室互動機器人 (Prime Plus 專屬) ──────────────────────────
+// ── Twitch 聊天室互動機器人 ─────────────────────────────────────────────
 const twitchBot = require('./twitch-bot');
 twitchBot.init();
 

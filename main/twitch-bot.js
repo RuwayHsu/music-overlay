@@ -1,5 +1,5 @@
 /**
- * twitch-bot.js — Prime Plus 專屬 Twitch 聊天室互動機器人
+ * twitch-bot.js — Twitch 聊天室互動機器人
  *
  * 功能亮點：
  * 1. 原生輕量級 IRC over WebSocket (wss://irc-ws.chat.twitch.tv:443)
