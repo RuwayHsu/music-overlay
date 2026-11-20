@@ -2,7 +2,7 @@
 
 語言 / Language: **繁體中文** | [English](./HowToUse_EN.md)
 
-**版本**：v2.4  
+**版本**：v1.0  
 **發行日期**：2026 年  
 **適用作業系統**：Windows 10 / Windows 11 (64-bit)  
 

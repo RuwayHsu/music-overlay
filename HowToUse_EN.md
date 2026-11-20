@@ -2,7 +2,7 @@
 
 Language: [繁體中文](./HowToUse.md) | **English**
 
-**Version**: v2.4  
+**Version**: v1.0  
 **Release Year**: 2026  
 **Supported OS**: Windows 10 / Windows 11 (64-bit)  
 
